@@ -1,0 +1,112 @@
+<!-- src/app/features/dashboard/layout/sidebar/sidebar.component.html -->
+<aside
+  class="h-full bg-primary-900 flex flex-col transition-all duration-300 ease-in-out"
+  [class]="collapsed ? 'w-16' : 'w-60'"
+>
+
+  <!-- ── Logo ──────────────────────────────────────────── -->
+  <div class="flex items-center h-16 px-4 border-b border-primary-800 shrink-0">
+    @if (!collapsed) {
+      <a routerLink="/" class="flex items-center gap-2.5 overflow-hidden">
+        <div class="w-8 h-8 bg-white/15 rounded-lg flex items-center justify-center shrink-0">
+          <span class="text-base">🐔</span>
+        </div>
+        <div class="flex flex-col leading-none animate-fade-in">
+          <span class="font-display font-bold text-white text-base tracking-tight">MACIF</span>
+          <span class="font-display font-bold text-accent text-xs tracking-widest -mt-0.5">CHICKEN</span>
+        </div>
+      </a>
+    } @else {
+      <div class="w-8 h-8 bg-white/15 rounded-lg flex items-center justify-center mx-auto">
+        <span class="text-base">🐔</span>
+      </div>
+    }
+  </div>
+
+  <!-- ── Navigation ────────────────────────────────────── -->
+  <nav class="flex-1 overflow-y-auto py-4 px-2 space-y-0.5">
+    @for (item of navItems; track item.route) {
+      <a
+        [routerLink]="item.route"
+        routerLinkActive="bg-white/15 text-white border-l-2 border-white"
+        [routerLinkActiveOptions]="{exact: item.route.endsWith('dashboard')}"
+        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-primary-200 hover:text-white hover:bg-white/10 transition-all duration-150 group relative"
+        [class.justify-center]="collapsed"
+        [title]="collapsed ? item.label : ''"
+      >
+        <!-- Icône -->
+        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="getIcon(item.icon)"/>
+        </svg>
+
+        <!-- Label -->
+        @if (!collapsed) {
+          <span class="text-sm font-medium truncate animate-fade-in">{{ item.label }}</span>
+          @if (item.badge) {
+            <span class="ml-auto bg-accent text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center shrink-0">
+              {{ item.badge > 9 ? '9+' : item.badge }}
+            </span>
+          }
+        }
+
+        <!-- Tooltip quand collapsed -->
+        @if (collapsed) {
+          <div class="absolute left-full ml-2 px-2 py-1 bg-neutral-900 text-white text-xs rounded-md whitespace-nowrap
+                      opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg">
+            {{ item.label }}
+          </div>
+        }
+      </a>
+    }
+  </nav>
+
+  <!-- ── Bas sidebar : profil + déconnexion ────────────── -->
+  <div class="border-t border-primary-800 p-3 shrink-0">
+
+    <!-- Profil utilisateur -->
+    @if (!collapsed) {
+      <div class="flex items-center gap-3 px-2 py-2 mb-1 animate-fade-in">
+        <div class="w-8 h-8 bg-white/15 rounded-full flex items-center justify-center shrink-0">
+          <span class="text-sm font-bold text-white">{{ auth.user()?.name?.charAt(0)?.toUpperCase() }}</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-white truncate">{{ auth.user()?.name }}</p>
+          <p class="text-xs text-primary-300 truncate">{{ auth.user()?.role }}</p>
+        </div>
+      </div>
+    }
+
+    <!-- Déconnexion -->
+    <button
+      (click)="logout()"
+      class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-primary-300 hover:text-red-300 hover:bg-red-900/30 transition-all duration-150"
+      [class.justify-center]="collapsed"
+      [title]="collapsed ? 'Déconnexion' : ''"
+    >
+      <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="getIcon('logout')"/>
+      </svg>
+      @if (!collapsed) {
+        <span class="text-sm font-medium animate-fade-in">Déconnexion</span>
+      }
+    </button>
+
+    <!-- Bouton collapse -->
+    <button
+      (click)="toggle()"
+      class="w-full flex items-center gap-3 px-3 py-2 mt-1 rounded-lg text-primary-400 hover:text-white hover:bg-white/10 transition-all duration-150"
+      [class.justify-center]="collapsed"
+    >
+      <svg
+        class="w-4 h-4 shrink-0 transition-transform duration-300"
+        [class.rotate-180]="collapsed"
+        fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+      </svg>
+      @if (!collapsed) {
+        <span class="text-xs animate-fade-in">Réduire</span>
+      }
+    </button>
+  </div>
+</aside>

@@ -1,0 +1,161 @@
+<!-- src/app/features/public/layout/navbar/navbar.component.html -->
+<nav
+  class="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+  [class]="scrolled()
+    ? 'bg-white shadow-md border-b border-neutral-100'
+    : 'bg-white/95 backdrop-blur-sm shadow-sm'"
+>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+
+      <!-- ── Logo ──────────────────────────────────────── -->
+      <a routerLink="/accueil" (click)="closeMenu()"
+         class="flex items-center gap-2.5 shrink-0 group">
+        <div class="w-9 h-9 bg-primary rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+          <span class="text-lg leading-none">🐔</span>
+        </div>
+        <div class="flex flex-col leading-none">
+          <span class="font-display font-bold text-primary text-lg tracking-tight">MACIF</span>
+          <span class="font-display font-bold text-accent text-xs tracking-widest -mt-0.5">CHICKEN</span>
+        </div>
+      </a>
+
+      <!-- ── Navigation Desktop ────────────────────────── -->
+      <div class="hidden md:flex items-center gap-1">
+        <a routerLink="/accueil" routerLinkActive="text-primary font-semibold"
+           [routerLinkActiveOptions]="{exact:true}"
+           class="px-4 py-2 text-sm text-neutral-600 hover:text-primary hover:bg-primary-50 rounded-lg transition-all duration-150 font-medium">
+          Accueil
+        </a>
+        <a routerLink="/recherche" routerLinkActive="text-primary font-semibold"
+           class="px-4 py-2 text-sm text-neutral-600 hover:text-primary hover:bg-primary-50 rounded-lg transition-all duration-150 font-medium">
+          Acheter
+        </a>
+        <a routerLink="/eleveurs" routerLinkActive="text-primary font-semibold"
+           class="px-4 py-2 text-sm text-neutral-600 hover:text-primary hover:bg-primary-50 rounded-lg transition-all duration-150 font-medium">
+          Éleveurs
+        </a>
+        <a routerLink="/tarifs" routerLinkActive="text-primary font-semibold"
+           class="px-4 py-2 text-sm text-neutral-600 hover:text-primary hover:bg-primary-50 rounded-lg transition-all duration-150 font-medium">
+          Tarifs
+        </a>
+      </div>
+
+      <!-- ── Actions Desktop ───────────────────────────── -->
+      <div class="hidden md:flex items-center gap-3">
+        @if (auth.isLoggedIn()) {
+          <!-- Bouton dashboard -->
+          <a [routerLink]="dashboardRoute"
+             class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-primary border-2 border-primary rounded-lg hover:bg-primary-50 transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            </svg>
+            Mon espace
+          </a>
+          <!-- Avatar + déconnexion -->
+          <button (click)="logout()"
+                  class="flex items-center gap-2 px-3 py-2 text-sm text-neutral-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
+            <div class="w-7 h-7 bg-primary-100 rounded-full flex items-center justify-center">
+              <span class="text-xs font-bold text-primary">{{ auth.user()?.name?.charAt(0)?.toUpperCase() }}</span>
+            </div>
+          </button>
+        } @else {
+          <a routerLink="/auth/login"
+             class="px-4 py-2 text-sm font-semibold text-primary border-2 border-primary rounded-lg hover:bg-primary-50 transition-all">
+            Connexion
+          </a>
+          <a routerLink="/auth/register"
+             class="px-4 py-2 text-sm font-semibold text-white bg-primary rounded-lg hover:bg-primary-800 shadow-sm hover:shadow-md transition-all">
+            S'inscrire
+          </a>
+        }
+      </div>
+
+      <!-- ── Bouton Hamburger Mobile ───────────────────── -->
+      <button
+        (click)="toggleMenu()"
+        class="md:hidden p-2 rounded-lg text-neutral-600 hover:text-primary hover:bg-primary-50 transition-all"
+        [attr.aria-expanded]="menuOpen()"
+        aria-label="Menu"
+      >
+        @if (menuOpen()) {
+          <!-- Icône X -->
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        } @else {
+          <!-- Icône hamburger -->
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        }
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Menu Mobile Drawer ────────────────────────────── -->
+  @if (menuOpen()) {
+    <div class="md:hidden border-t border-neutral-100 bg-white animate-slide-up shadow-lg">
+      <div class="px-4 py-4 space-y-1">
+        <a routerLink="/accueil" (click)="closeMenu()"
+           class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-neutral-700 hover:text-primary hover:bg-primary-50 rounded-xl transition-all">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+          </svg>
+          Accueil
+        </a>
+        <a routerLink="/recherche" (click)="closeMenu()"
+           class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-neutral-700 hover:text-primary hover:bg-primary-50 rounded-xl transition-all">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          Acheter
+        </a>
+        <a routerLink="/eleveurs" (click)="closeMenu()"
+           class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-neutral-700 hover:text-primary hover:bg-primary-50 rounded-xl transition-all">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          Éleveurs
+        </a>
+
+        <div class="border-t border-neutral-100 pt-3 mt-3 space-y-2">
+          @if (auth.isLoggedIn()) {
+            <div class="flex items-center gap-3 px-4 py-2 mb-2">
+              <div class="w-9 h-9 bg-primary-100 rounded-full flex items-center justify-center">
+                <span class="text-sm font-bold text-primary">{{ auth.user()?.name?.charAt(0)?.toUpperCase() }}</span>
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-neutral-900">{{ auth.user()?.name }}</p>
+                <p class="text-xs text-neutral-500">{{ auth.user()?.email }}</p>
+              </div>
+            </div>
+            <a [routerLink]="dashboardRoute" (click)="closeMenu()"
+               class="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-primary bg-primary-50 rounded-xl transition-all">
+              Mon espace
+            </a>
+            <button (click)="logout()"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-all">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+              </svg>
+              Déconnexion
+            </button>
+          } @else {
+            <a routerLink="/auth/login" (click)="closeMenu()"
+               class="flex items-center justify-center px-4 py-3 text-sm font-semibold text-primary border-2 border-primary rounded-xl transition-all">
+              Connexion
+            </a>
+            <a routerLink="/auth/register" (click)="closeMenu()"
+               class="flex items-center justify-center px-4 py-3 text-sm font-semibold text-white bg-primary rounded-xl transition-all">
+              Créer un compte
+            </a>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</nav>
+
+<!-- Spacer pour compenser la navbar fixed -->
+<div class="h-16"></div>

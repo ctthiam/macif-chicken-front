@@ -1,0 +1,434 @@
+<!-- ============================================================
+     src/app/features/public/stock-detail/stock-detail.component.html
+     DES-07 — Page détail stock
+     ============================================================ -->
+
+<!-- Loading -->
+@if (loading()) {
+  <div class="min-h-screen flex items-center justify-center bg-neutral-50">
+    <app-loading-spinner size="lg" text="Chargement de l'annonce…" [fullPage]="true" />
+  </div>
+}
+
+@if (!loading() && stock()) {
+<div class="min-h-screen bg-neutral-50">
+
+  <!-- ── Fil d'Ariane ──────────────────────────────────────── -->
+  <div class="bg-white border-b border-neutral-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+      <nav class="flex items-center gap-2 text-xs text-neutral-500">
+        <a routerLink="/accueil" class="hover:text-primary transition-colors">Accueil</a>
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+        </svg>
+        <a routerLink="/recherche" class="hover:text-primary transition-colors">Annonces</a>
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+        </svg>
+        <span class="text-neutral-800 font-medium truncate max-w-48">{{ stock()!.titre }}</span>
+      </nav>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="grid lg:grid-cols-3 gap-8">
+
+      <!-- ══════════════════════════════════════════════
+           COLONNE GAUCHE — Galerie + Infos + Avis
+           ══════════════════════════════════════════════ -->
+      <div class="lg:col-span-2 space-y-6">
+
+        <!-- ── Galerie photos ──────────────────────── -->
+        <div class="bg-white rounded-2xl shadow-card border border-neutral-100 overflow-hidden">
+
+          <!-- Photo principale -->
+          <div class="relative h-72 sm:h-96 bg-gradient-to-br from-primary-50 to-primary-100 overflow-hidden">
+            @if (stock()!.photos && stock()!.photos.length > 0) {
+              <img
+                [src]="stock()!.photos[activePhoto()]"
+                [alt]="stock()!.titre"
+                class="w-full h-full object-cover transition-all duration-300"
+              />
+            } @else {
+              <div class="w-full h-full flex items-center justify-center">
+                <span class="text-8xl">🐔</span>
+              </div>
+            }
+
+            <!-- Badge statut -->
+            <div class="absolute top-4 left-4">
+              <app-badge-status [status]="stock()!.statut" type="stock" />
+            </div>
+
+            <!-- Badge certifié -->
+            @if (stock()!.eleveur?.is_certified) {
+              <div class="absolute top-4 right-4">
+                <span class="inline-flex items-center gap-1.5 bg-white/95 backdrop-blur-sm text-green-700 text-xs font-semibold px-3 py-1.5 rounded-full shadow">
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                  </svg>
+                  Certifié
+                </span>
+              </div>
+            }
+
+            <!-- Navigation photos -->
+            @if (stock()!.photos && stock()!.photos.length > 1) {
+              <button (click)="prevPhoto()"
+                      class="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                </svg>
+              </button>
+              <button (click)="nextPhoto()"
+                      class="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                </svg>
+              </button>
+              <!-- Indicateur photos -->
+              <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                @for (photo of stock()!.photos; track $index) {
+                  <button
+                    (click)="setPhoto($index)"
+                    class="w-2 h-2 rounded-full transition-all"
+                    [class]="$index === activePhoto() ? 'bg-white w-4' : 'bg-white/50 hover:bg-white/80'"
+                  ></button>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Miniatures -->
+          @if (stock()!.photos && stock()!.photos.length > 1) {
+            <div class="flex gap-2 p-3 overflow-x-auto">
+              @for (photo of stock()!.photos; track $index) {
+                <button
+                  (click)="setPhoto($index)"
+                  class="w-16 h-16 rounded-lg overflow-hidden shrink-0 border-2 transition-all"
+                  [class]="$index === activePhoto() ? 'border-primary' : 'border-transparent hover:border-neutral-300'"
+                >
+                  <img [src]="photo" [alt]="'Photo ' + ($index + 1)" class="w-full h-full object-cover"/>
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- ── Onglets Desc / Avis ─────────────────── -->
+        <div class="bg-white rounded-2xl shadow-card border border-neutral-100 overflow-hidden">
+
+          <!-- Tabs -->
+          <div class="flex border-b border-neutral-100">
+            <button
+              (click)="activeTab.set('description')"
+              class="flex-1 py-4 text-sm font-semibold transition-all border-b-2"
+              [class]="activeTab() === 'description'
+                ? 'text-primary border-primary bg-primary-50/50'
+                : 'text-neutral-500 border-transparent hover:text-neutral-700'"
+            >
+              📋 Description
+            </button>
+            <button
+              (click)="activeTab.set('avis')"
+              class="flex-1 py-4 text-sm font-semibold transition-all border-b-2"
+              [class]="activeTab() === 'avis'
+                ? 'text-primary border-primary bg-primary-50/50'
+                : 'text-neutral-500 border-transparent hover:text-neutral-700'"
+            >
+              ⭐ Avis ({{ stock()!.avis?.length ?? 0 }})
+            </button>
+          </div>
+
+          <div class="p-6">
+
+            <!-- Tab : Description -->
+            @if (activeTab() === 'description') {
+              <div class="space-y-5 animate-fade-in">
+                <p class="text-neutral-700 leading-relaxed text-sm">
+                  {{ stock()!.description || 'Aucune description fournie.' }}
+                </p>
+
+                <!-- Caractéristiques -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  @for (spec of specs; track spec.label) {
+                    @if (spec.value) {
+                      <div class="bg-neutral-50 rounded-xl p-3 border border-neutral-100">
+                        <p class="text-xs text-neutral-500 mb-1">{{ spec.label }}</p>
+                        <p class="text-sm font-semibold text-neutral-900">{{ spec.value }}</p>
+                      </div>
+                    }
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Tab : Avis -->
+            @if (activeTab() === 'avis') {
+              <div class="animate-fade-in">
+                @if (!stock()!.avis || stock()!.avis.length === 0) {
+                  <div class="text-center py-10">
+                    <div class="text-4xl mb-3">💬</div>
+                    <p class="text-neutral-500 text-sm">Aucun avis pour le moment.</p>
+                  </div>
+                } @else {
+                  <!-- Résumé notes -->
+                  <div class="flex items-center gap-4 p-4 bg-primary-50 rounded-xl mb-5">
+                    <div class="text-center shrink-0">
+                      <p class="text-4xl font-extrabold text-primary">{{ notesMoyenneAvis | number:'1.1-1' }}</p>
+                      <app-rating-stars [rating]="notesMoyenneAvis" [showValue]="false" size="sm" />
+                      <p class="text-xs text-neutral-500 mt-1">{{ stock()!.avis.length }} avis</p>
+                    </div>
+                    <div class="flex-1 space-y-1.5">
+                      @for (n of [5,4,3,2,1]; track n) {
+                        <div class="flex items-center gap-2">
+                          <span class="text-xs text-neutral-500 w-2">{{ n }}</span>
+                          <svg class="w-3 h-3 text-yellow-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                          </svg>
+                          <div class="flex-1 bg-neutral-200 rounded-full h-1.5">
+                            <div class="bg-yellow-400 h-1.5 rounded-full transition-all"
+                                 [style.width.%]="avisPctPourNote(n)">
+                            </div>
+                          </div>
+                          <span class="text-xs text-neutral-400 w-4">{{ avisCountPourNote(n) }}</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- Liste avis -->
+                  <div class="space-y-4">
+                    @for (avis of stock()!.avis; track avis.id) {
+                      <div class="border-b border-neutral-100 pb-4 last:border-0 last:pb-0">
+                        <div class="flex items-start gap-3">
+                          <div class="w-9 h-9 bg-primary-100 rounded-full flex items-center justify-center shrink-0">
+                            <span class="text-sm font-bold text-primary">{{ avis.acheteur.name.charAt(0).toUpperCase() }}</span>
+                          </div>
+                          <div class="flex-1">
+                            <div class="flex items-center justify-between gap-2 mb-1">
+                              <p class="text-sm font-semibold text-neutral-900">{{ avis.acheteur.name }}</p>
+                              <p class="text-xs text-neutral-400">{{ formatDate(avis.created_at) }}</p>
+                            </div>
+                            <app-rating-stars [rating]="avis.note" [showValue]="false" size="sm" />
+                            @if (avis.commentaire) {
+                              <p class="text-sm text-neutral-600 mt-2 leading-relaxed">{{ avis.commentaire }}</p>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════
+           COLONNE DROITE — Commander + Éleveur (sticky)
+           ══════════════════════════════════════════════ -->
+      <div class="space-y-4">
+        <div class="sticky top-20 space-y-4">
+
+          <!-- ── Card Commander ──────────────────────── -->
+          <div class="bg-white rounded-2xl shadow-card border border-neutral-100 overflow-hidden">
+
+            <!-- Header -->
+            <div class="p-5 border-b border-neutral-100">
+              <h1 class="font-display font-bold text-neutral-900 text-lg leading-tight mb-1">
+                {{ stock()!.titre }}
+              </h1>
+              <div class="flex items-center gap-2 text-xs text-neutral-500">
+                <svg class="w-3.5 h-3.5 text-neutral-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                </svg>
+                {{ stock()!.eleveur?.localisation ?? stock()!.localisation }}
+              </div>
+            </div>
+
+            <div class="p-5 space-y-4">
+
+              <!-- Prix -->
+              <div class="flex items-end gap-2">
+                <span class="text-3xl font-extrabold text-primary">
+                  {{ stock()!.prix_par_kg | number:'1.0-0' }}
+                </span>
+                <span class="text-neutral-500 text-sm mb-1">FCFA/kg</span>
+                @if (stock()!.prix_par_unite) {
+                  <span class="text-neutral-400 text-xs mb-1">· {{ stock()!.prix_par_unite | number:'1.0-0' }} FCFA/unité</span>
+                }
+              </div>
+
+              <!-- Mode vente + Quantité dispo -->
+              <div class="flex flex-wrap gap-2">
+                <span class="bg-primary-50 text-primary-800 text-xs font-semibold px-2.5 py-1 rounded-full">
+                  {{ modeVenteLabel }}
+                </span>
+                <span class="bg-neutral-100 text-neutral-700 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                  {{ stock()!.quantite_disponible }} unités
+                </span>
+              </div>
+
+              <!-- Sélecteur quantité -->
+              @if (stock()!.statut === 'disponible') {
+                <div>
+                  <label class="block text-xs font-semibold text-neutral-700 mb-2 uppercase tracking-wide">Quantité</label>
+                  <div class="flex items-center border border-neutral-200 rounded-xl overflow-hidden w-36">
+                    <button (click)="decrementQty()"
+                            class="w-10 h-10 flex items-center justify-center text-neutral-600 hover:bg-neutral-50 transition-colors font-bold text-lg">
+                      −
+                    </button>
+                    <input
+                      type="number"
+                      [ngModel]="quantite()"
+                      (ngModelChange)="quantite.set(Math.max(1, $event))"
+                      class="flex-1 text-center text-sm font-semibold text-neutral-900 focus:outline-none py-2"
+                      min="1"
+                      [max]="stock()!.quantite_disponible"
+                    />
+                    <button (click)="incrementQty()"
+                            class="w-10 h-10 flex items-center justify-center text-neutral-600 hover:bg-neutral-50 transition-colors font-bold text-lg">
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Prix total -->
+                <div class="bg-primary-50 rounded-xl p-3 flex items-center justify-between">
+                  <span class="text-sm text-neutral-600">Total estimé</span>
+                  <span class="text-lg font-extrabold text-primary">
+                    {{ prixTotal | number:'1.0-0' }} FCFA
+                  </span>
+                </div>
+
+                <!-- Erreur -->
+                @if (commandeError()) {
+                  <div class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-xl animate-fade-in">
+                    <svg class="w-4 h-4 text-red-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"/>
+                    </svg>
+                    <p class="text-xs text-red-700">{{ commandeError() }}</p>
+                  </div>
+                }
+
+                <!-- Succès -->
+                @if (commandeSuccess()) {
+                  <div class="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl animate-fade-in">
+                    <svg class="w-5 h-5 text-green-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                    <p class="text-sm font-semibold text-green-700">Commande créée ! Redirection…</p>
+                  </div>
+                }
+
+                <!-- Bouton Commander -->
+                @if (!commandeSuccess()) {
+                  <button
+                    (click)="commander()"
+                    [disabled]="commandeLoading()"
+                    class="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-700 text-white font-bold py-4 rounded-xl shadow-md hover:shadow-lg transition-all text-base disabled:opacity-70"
+                  >
+                    @if (commandeLoading()) {
+                      <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                      </svg>
+                      En cours…
+                    } @else {
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                      </svg>
+                      Commander maintenant
+                    }
+                  </button>
+                }
+
+              } @else {
+                <!-- Stock non disponible -->
+                <div class="bg-neutral-100 rounded-xl p-4 text-center">
+                  <p class="text-sm font-semibold text-neutral-600">Stock non disponible</p>
+                  <a routerLink="/recherche" class="text-xs text-primary hover:underline mt-1 block">
+                    Voir d'autres annonces →
+                  </a>
+                </div>
+              }
+
+              <!-- Garanties -->
+              <div class="border-t border-neutral-100 pt-4 space-y-2.5">
+                @for (g of garanties; track g.label) {
+                  <div class="flex items-center gap-2.5 text-xs text-neutral-600">
+                    <span class="text-base">{{ g.icon }}</span>
+                    {{ g.label }}
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Card Éleveur ────────────────────────── -->
+          @if (stock()!.eleveur) {
+            <div class="bg-white rounded-2xl shadow-card border border-neutral-100 p-5">
+              <h3 class="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-3">L'éleveur</h3>
+
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center shrink-0">
+                  <span class="text-lg font-bold text-primary">{{ stock()!.eleveur.name.charAt(0).toUpperCase() }}</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <p class="font-semibold text-neutral-900 text-sm truncate">{{ stock()!.eleveur.name }}</p>
+                    @if (stock()!.eleveur.is_certified) {
+                      <svg class="w-4 h-4 text-green-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                      </svg>
+                    }
+                  </div>
+                  <app-rating-stars
+                    [rating]="stock()!.eleveur.note_moyenne"
+                    [count]="stock()!.eleveur.nombre_avis"
+                    size="sm"
+                  />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2 mb-3">
+                <div class="bg-neutral-50 rounded-lg p-2.5 text-center">
+                  <p class="text-lg font-bold text-neutral-900">{{ stock()!.eleveur.total_stocks }}</p>
+                  <p class="text-xs text-neutral-500">Annonces</p>
+                </div>
+                <div class="bg-neutral-50 rounded-lg p-2.5 text-center">
+                  <p class="text-lg font-bold text-neutral-900">{{ stock()!.eleveur.nombre_avis }}</p>
+                  <p class="text-xs text-neutral-500">Avis</p>
+                </div>
+              </div>
+
+              <a [routerLink]="['/eleveurs', stock()!.eleveur.id]"
+                 class="w-full flex items-center justify-center gap-2 border-2 border-primary text-primary font-semibold py-2.5 rounded-xl hover:bg-primary-50 transition-all text-sm">
+                Voir le profil
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                </svg>
+              </a>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Stocks similaires ────────────────────────────── -->
+    @if (stocksSimilaires().length > 0) {
+      <div class="mt-10">
+        <h2 class="font-display font-bold text-xl text-neutral-900 mb-5">Annonces similaires</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          @for (s of stocksSimilaires(); track s.id) {
+            <app-stock-card [stock]="s" (commanderClick)="onCommander($event)" />
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>
+}

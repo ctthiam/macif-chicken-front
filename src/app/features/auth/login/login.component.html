@@ -1,0 +1,171 @@
+<!-- src/app/features/auth/login/login.component.html -->
+<div class="min-h-screen bg-gradient-to-br from-primary-900 via-primary-800 to-primary-700 flex items-center justify-center p-4">
+
+  <!-- Fond décoratif -->
+  <div class="absolute inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute -top-32 -right-32 w-96 h-96 bg-accent/10 rounded-full blur-3xl"></div>
+    <div class="absolute -bottom-32 -left-32 w-96 h-96 bg-primary-500/20 rounded-full blur-3xl"></div>
+    <!-- Pattern grille -->
+    <div class="absolute inset-0 opacity-[0.03]"
+         style="background-image: linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px);
+                background-size: 40px 40px;">
+    </div>
+  </div>
+
+  <div class="relative w-full max-w-md animate-slide-up">
+
+    <!-- Logo / Brand -->
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-16 h-16 bg-white/15 rounded-2xl backdrop-blur-sm mb-4 ring-1 ring-white/20">
+        <span class="text-3xl">🐔</span>
+      </div>
+      <h1 class="text-2xl font-display font-bold text-white">MACIF CHICKEN</h1>
+      <p class="text-primary-200 text-sm mt-1">Marketplace avicole du Sénégal</p>
+    </div>
+
+    <!-- Card formulaire -->
+    <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+
+      <!-- Header card -->
+      <div class="px-8 pt-8 pb-4">
+        <h2 class="text-xl font-display font-bold text-neutral-900">Connexion</h2>
+        <p class="text-sm text-neutral-500 mt-1">Bienvenue ! Connectez-vous à votre compte.</p>
+      </div>
+
+      <!-- Erreur globale -->
+      @if (error()) {
+        <div class="mx-8 mb-2 flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-xl animate-fade-in">
+          <svg class="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"/>
+          </svg>
+          <p class="text-sm text-red-700">{{ error() }}</p>
+        </div>
+      }
+
+      <!-- Formulaire -->
+      <form [formGroup]="form" (ngSubmit)="submit()" class="px-8 pb-8 space-y-5" novalidate>
+
+        <!-- Email -->
+        <div>
+          <label class="input-label" for="email">Adresse email</label>
+          <div class="relative">
+            <div class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+              <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <input
+              id="email"
+              type="email"
+              formControlName="email"
+              placeholder="vous@exemple.com"
+              autocomplete="email"
+              class="input pl-10"
+              [class.input-error]="email.invalid && email.touched"
+            />
+          </div>
+          @if (email.invalid && email.touched) {
+            <p class="input-error-msg">
+              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+              @if (email.hasError('required')) { L'email est requis. }
+              @else { L'email n'est pas valide. }
+            </p>
+          }
+        </div>
+
+        <!-- Mot de passe -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="input-label !mb-0" for="password">Mot de passe</label>
+            <a routerLink="/auth/reset-password" class="text-xs text-primary hover:text-primary-700 font-medium transition-colors">
+              Mot de passe oublié ?
+            </a>
+          </div>
+          <div class="relative">
+            <div class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+              <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+              </svg>
+            </div>
+            <input
+              id="password"
+              [type]="showPass() ? 'text' : 'password'"
+              formControlName="password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+              class="input pl-10 pr-11"
+              [class.input-error]="password.invalid && password.touched"
+            />
+            <button
+              type="button"
+              (click)="showPass.set(!showPass())"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition-colors"
+              [attr.aria-label]="showPass() ? 'Masquer' : 'Afficher'"
+            >
+              @if (showPass()) {
+                <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                </svg>
+              } @else {
+                <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              }
+            </button>
+          </div>
+          @if (password.invalid && password.touched) {
+            <p class="input-error-msg">
+              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+              Le mot de passe doit contenir au moins 8 caractères.
+            </p>
+          }
+        </div>
+
+        <!-- Bouton submit -->
+        <button
+          type="submit"
+          class="btn-primary w-full mt-2 h-11 text-base relative"
+          [disabled]="loading()"
+        >
+          @if (loading()) {
+            <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            Connexion…
+          } @else {
+            Se connecter
+            <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+            </svg>
+          }
+        </button>
+
+        <!-- Séparateur -->
+        <div class="relative">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-neutral-200"></div>
+          </div>
+          <div class="relative flex justify-center text-xs text-neutral-400">
+            <span class="bg-white px-3">Pas encore de compte ?</span>
+          </div>
+        </div>
+
+        <!-- Lien inscription -->
+        <a
+          routerLink="/auth/register"
+          class="btn-outline w-full h-11 text-sm"
+        >
+          Créer un compte gratuitement
+        </a>
+
+      </form>
+    </div>
+
+    <!-- Footer -->
+    <p class="text-center text-primary-300 text-xs mt-6">
+      © 2026 MACIF CHICKEN — Marketplace avicole du Sénégal
+    </p>
+  </div>
+</div>

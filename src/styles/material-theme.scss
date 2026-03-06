@@ -1,0 +1,74 @@
+// ============================================================
+// MACIF CHICKEN — Angular Material Theme
+// Fichier : src/styles/material-theme.scss
+// ============================================================
+@use '@angular/material' as mat;
+
+// ── Palettes ─────────────────────────────────────────────────
+$macif-primary: mat.define-palette((
+  50:   #E8F5E9,
+  100:  #C8E6C9,
+  200:  #A5D6A7,
+  300:  #81C784,
+  400:  #66BB6A,
+  500:  #4CAF50,
+  600:  #43A047,
+  700:  #388E3C,
+  800:  #2E7D32,
+  900:  #1B5E20,
+  contrast: (
+    50:   rgba(0,0,0,.87),
+    100:  rgba(0,0,0,.87),
+    200:  rgba(0,0,0,.87),
+    300:  rgba(0,0,0,.87),
+    400:  rgba(0,0,0,.87),
+    500:  #fff,
+    600:  #fff,
+    700:  #fff,
+    800:  #fff,
+    900:  #fff,
+  )
+), 900, 700, 200);
+
+$macif-accent: mat.define-palette((
+  50:   #FFF8E1,
+  100:  #FFECB3,
+  200:  #FFE082,
+  300:  #FFD54F,
+  400:  #FFCA28,
+  500:  #FFC107,
+  600:  #FFB300,
+  700:  #FF8F00,
+  800:  #FF6F00,
+  900:  #E65100,
+  contrast: (
+    50:   rgba(0,0,0,.87),
+    100:  rgba(0,0,0,.87),
+    200:  rgba(0,0,0,.87),
+    300:  rgba(0,0,0,.87),
+    400:  rgba(0,0,0,.87),
+    500:  rgba(0,0,0,.87),
+    600:  rgba(0,0,0,.87),
+    700:  rgba(0,0,0,.87),
+    800:  #fff,
+    900:  #fff,
+  )
+), 800, 600, 200);
+
+$macif-warn: mat.define-palette(mat.$red-palette, 700);
+
+// ── Thème ────────────────────────────────────────────────────
+$macif-theme: mat.define-light-theme((
+  color: (
+    primary: $macif-primary,
+    accent:  $macif-accent,
+    warn:    $macif-warn,
+  ),
+  typography: mat.define-typography-config(
+    $font-family: '"Plus Jakarta Sans", Inter, sans-serif',
+  ),
+  density: 0,
+));
+
+// ── Appliquer ─────────────────────────────────────────────────
+@include mat.all-component-themes($macif-theme);
