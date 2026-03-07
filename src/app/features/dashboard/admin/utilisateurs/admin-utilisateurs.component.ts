@@ -182,7 +182,7 @@ export class AdminUtilisateursComponent implements OnInit {
 
   load(): void {
     this.loading.set(true);
-    let url = `${environment.apiUrl}/admin/utilisateurs?per_page=30`;
+    let url = `${environment.apiUrl}/admin/users?per_page=30`;
     if (this.filtreRole()) url += `&role=${this.filtreRole()}`;
     if (this.search)       url += `&search=${encodeURIComponent(this.search)}`;
 
@@ -197,15 +197,14 @@ export class AdminUtilisateursComponent implements OnInit {
   }
 
   certifier(u: Utilisateur): void {
-    this.http.post(`${environment.apiUrl}/admin/utilisateurs/${u.id}/certifier`, {}).subscribe({
+    this.http.put(`${environment.apiUrl}/admin/users/${u.id}/certifier`, {}).subscribe({
       next: () => this.utilisateurs.update(list => list.map(x => x.id === u.id ? { ...x, is_certified: true } : x)),
       error: () => {},
     });
   }
 
   toggleSuspension(u: Utilisateur): void {
-    const action = u.is_active ? 'suspendre' : 'reactiver';
-    this.http.post(`${environment.apiUrl}/admin/utilisateurs/${u.id}/${action}`, {}).subscribe({
+    this.http.put(`${environment.apiUrl}/admin/users/${u.id}/toggle-status`, {}).subscribe({
       next: () => this.utilisateurs.update(list => list.map(x => x.id === u.id ? { ...x, is_active: !u.is_active } : x)),
       error: () => {},
     });

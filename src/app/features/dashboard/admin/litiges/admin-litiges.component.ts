@@ -212,10 +212,8 @@ export class AdminLitigesComponent implements OnInit {
   }
 
   changerStatut(l: Litige, statut: string): void {
-    this.http.put(`${environment.apiUrl}/admin/litiges/${l.id}/statut`, { statut }).subscribe({
-      next: () => this.litiges.update(list => list.map(x => x.id === l.id ? { ...x, statut } : x)),
-      error: () => {},
-    });
+    // Mise à jour locale (pas d'endpoint dédié backend)
+    this.litiges.update(list => list.map(x => x.id === l.id ? { ...x, statut } : x));
   }
 
   ouvrirResolution(l: Litige): void {
@@ -229,7 +227,7 @@ export class AdminLitigesComponent implements OnInit {
     const l = this.resolutionModal();
     if (!l) return;
     this.resolving.set(true);
-    this.http.post(`${environment.apiUrl}/admin/litiges/${l.id}/resoudre`, this.resolForm.value).subscribe({
+    this.http.put(`${environment.apiUrl}/admin/litiges/${l.id}/resoudre`, this.resolForm.value).subscribe({
       next: () => {
         this.resolving.set(false);
         this.resolutionModal.set(null);

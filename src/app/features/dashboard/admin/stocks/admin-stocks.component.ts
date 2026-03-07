@@ -156,7 +156,7 @@ export class AdminStocksComponent implements OnInit {
 
   supprimerStock(s: Stock): void {
     if (!confirm(`Supprimer "${s.titre}" ?`)) return;
-    this.http.delete(`${environment.apiUrl}/admin/stocks/${s.id}`).subscribe({
+    this.http.put(`${environment.apiUrl}/admin/stocks/${s.id}/moderer`, { action: 'supprimer' }).subscribe({
       next: () => this.stocks.update(list => list.filter(x => x.id !== s.id)),
       error: () => {},
     });

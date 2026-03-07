@@ -304,16 +304,6 @@
                   </span>
                 </div>
 
-                <!-- Erreur -->
-                @if (commandeError()) {
-                  <div class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-xl animate-fade-in">
-                    <svg class="w-4 h-4 text-red-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"/>
-                    </svg>
-                    <p class="text-xs text-red-700">{{ commandeError() }}</p>
-                  </div>
-                }
-
                 <!-- Succès -->
                 @if (commandeSuccess()) {
                   <div class="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl animate-fade-in">
@@ -327,22 +317,14 @@
                 <!-- Bouton Commander -->
                 @if (!commandeSuccess()) {
                   <button
-                    (click)="commander()"
+                    (click)="ouvrirModal()"
                     [disabled]="commandeLoading()"
                     class="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-700 text-white font-bold py-4 rounded-xl shadow-md hover:shadow-lg transition-all text-base disabled:opacity-70"
                   >
-                    @if (commandeLoading()) {
-                      <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                      </svg>
-                      En cours…
-                    } @else {
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-                      </svg>
-                      Commander maintenant
-                    }
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                    Commander maintenant
                   </button>
                 }
 
@@ -431,4 +413,102 @@
     }
   </div>
 </div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL — Finaliser la commande
+     ══════════════════════════════════════════════════════════ -->
+@if (showCommandeModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-5">
+
+      <!-- En-tête modal -->
+      <div class="flex items-center justify-between">
+        <h2 class="font-display font-bold text-lg text-neutral-900">Finaliser la commande</h2>
+        <button (click)="showCommandeModal.set(false)"
+                class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-100 text-neutral-500 transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Récapitulatif -->
+      <div class="bg-primary-50 rounded-xl p-4 flex justify-between items-center">
+        <div>
+          <p class="text-sm font-semibold text-neutral-900">{{ stock()!.titre }}</p>
+          <p class="text-xs text-neutral-500">{{ quantite() }} unité(s)</p>
+        </div>
+        <p class="text-lg font-extrabold text-primary">{{ prixTotal | number:'1.0-0' }} FCFA</p>
+      </div>
+
+      <!-- Adresse livraison -->
+      <div>
+        <label class="block text-sm font-semibold text-neutral-700 mb-2">
+          Adresse de livraison <span class="text-red-500">*</span>
+        </label>
+        <textarea
+          [ngModel]="adresseLivraison()"
+          (ngModelChange)="adresseLivraison.set($event)"
+          rows="3"
+          placeholder="Ex: Rue 10, Cité Keur Gorgui, Dakar"
+          class="w-full border border-neutral-200 rounded-xl px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"
+        ></textarea>
+      </div>
+
+      <!-- Mode paiement -->
+      <div>
+        <label class="block text-sm font-semibold text-neutral-700 mb-2">
+          Mode de paiement <span class="text-red-500">*</span>
+        </label>
+        <div class="grid grid-cols-3 gap-2">
+          @for (mp of modesPaiement; track mp.value) {
+            <button
+              (click)="modePaiement.set(mp.value)"
+              class="py-3 px-2 rounded-xl border-2 text-xs font-semibold transition-all text-center"
+              [class]="modePaiement() === mp.value
+                ? 'border-primary bg-primary-50 text-primary'
+                : 'border-neutral-200 text-neutral-600 hover:border-neutral-300'"
+            >
+              {{ mp.label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Erreur -->
+      @if (commandeError()) {
+        <div class="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-xl">
+          <svg class="w-4 h-4 text-red-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"/>
+          </svg>
+          <p class="text-xs text-red-700">{{ commandeError() }}</p>
+        </div>
+      }
+
+      <!-- Boutons -->
+      <div class="flex gap-3 pt-1">
+        <button
+          (click)="showCommandeModal.set(false)"
+          class="flex-1 py-3 rounded-xl border-2 border-neutral-200 text-neutral-700 font-semibold text-sm hover:bg-neutral-50 transition-colors"
+        >
+          Annuler
+        </button>
+        <button
+          (click)="commander()"
+          [disabled]="commandeLoading() || !adresseLivraison()"
+          class="flex-1 py-3 rounded-xl bg-accent hover:bg-accent-700 text-white font-bold text-sm shadow-md transition-all disabled:opacity-60"
+        >
+          @if (commandeLoading()) {
+            <svg class="animate-spin w-4 h-4 mx-auto" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+          } @else {
+            Confirmer la commande
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
 }

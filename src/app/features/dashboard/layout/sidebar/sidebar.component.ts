@@ -50,12 +50,11 @@ export class SidebarComponent {
 
   private adminNav: NavItem[] = [
     { label: 'Tableau de bord', route: '/admin/dashboard',  icon: 'home' },
-    { label: 'Utilisateurs',    route: '/admin/users',       icon: 'users' },
-    { label: 'Annonces',        route: '/admin/stocks',      icon: 'package' },
-    { label: 'Commandes',       route: '/admin/commandes',   icon: 'shopping-bag' },
-    { label: 'Litiges',         route: '/admin/litiges',     icon: 'alert-circle' },
-    { label: 'Finances',        route: '/admin/finances',    icon: 'bar-chart' },
-    { label: 'Paramètres',      route: '/admin/settings',    icon: 'settings' },
+    { label: 'Utilisateurs',    route: '/admin/utilisateurs', icon: 'users' },
+    { label: 'Annonces',        route: '/admin/stocks',       icon: 'package' },
+    { label: 'Commandes',       route: '/admin/commandes',    icon: 'shopping-bag' },
+    { label: 'Litiges',         route: '/admin/litiges',      icon: 'alert-circle' },
+    { label: 'Finances',        route: '/admin/finances',     icon: 'bar-chart' },
   ];
 
   toggle(): void {

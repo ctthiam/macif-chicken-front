@@ -113,11 +113,11 @@ export class SearchComponent implements OnInit {
       .set('per_page', 12)
       .set('statut',   'disponible');
 
-    if (this.filters.q)          params = params.set('search',     this.filters.q);
+    if (this.filters.q)          params = params.set('q',     this.filters.q);
     if (this.filters.ville)      params = params.set('ville',      this.filters.ville);
     if (this.filters.mode_vente) params = params.set('mode_vente', this.filters.mode_vente);
-    if (this.filters.min_prix)   params = params.set('min_prix',   this.filters.min_prix);
-    if (this.filters.max_prix)   params = params.set('max_prix',   this.filters.max_prix);
+    if (this.filters.min_prix)   params = params.set('prix_min',   this.filters.min_prix);
+    if (this.filters.max_prix)   params = params.set('prix_max',   this.filters.max_prix);
     if (this.filters.certifie)   params = params.set('certifie',   '1');
     if (this.filters.sort) {
       const [field, dir] = this.filters.sort.split('_').reduce((acc, part, i, arr) => {
@@ -128,7 +128,7 @@ export class SearchComponent implements OnInit {
       params = params.set('sort_by', field).set('sort_dir', dir || 'desc');
     }
 
-    this.http.get<any>(`${environment.apiUrl}/recherche`, { params }).subscribe({
+    this.http.get<any>(`${environment.apiUrl}/stocks`, { params }).subscribe({
       next: (res) => {
         this.stocks.set(res.data ?? []);
         this.meta.set(res.meta ?? this.meta());

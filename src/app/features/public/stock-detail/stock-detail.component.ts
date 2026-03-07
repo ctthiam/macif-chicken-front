@@ -47,15 +47,26 @@ interface StockDetail extends Stock {
   templateUrl: './stock-detail.component.html',
 })
 export class StockDetailComponent implements OnInit {
-  stock         = signal<StockDetail | null>(null);
+  stock            = signal<StockDetail | null>(null);
   stocksSimilaires = signal<Stock[]>([]);
-  loading       = signal(true);
-  activePhoto   = signal(0);
-  quantite      = signal(1);
-  activeTab     = signal<'description'|'avis'>('description');
-  commandeLoading = signal(false);
-  commandeSuccess = signal(false);
-  commandeError   = signal('');
+  loading          = signal(true);
+  activePhoto      = signal(0);
+  quantite         = signal(1);
+  activeTab        = signal<'description'|'avis'>('description');
+  commandeLoading  = signal(false);
+  commandeSuccess  = signal(false);
+  commandeError    = signal('');
+
+  // ── Modal commande ────────────────────────────────────────
+  showCommandeModal = signal(false);
+  adresseLivraison  = signal('');
+  modePaiement      = signal('wave');
+
+  readonly modesPaiement = [
+    { value: 'wave',         label: '💙 Wave' },
+    { value: 'orange_money', label: '🟠 Orange Money' },
+    { value: 'free_money',   label: '🟢 Free Money' },
+  ];
 
   readonly Math = Math;
 
@@ -70,12 +81,12 @@ export class StockDetailComponent implements OnInit {
     const s = this.stock();
     if (!s) return [];
     return [
-      { label: 'Race',             value: s.race },
-      { label: 'Âge',              value: s.age_semaines ? `${s.age_semaines} semaines` : null },
-      { label: 'Poids moyen',      value: s.poids_moyen_kg ? `${s.poids_moyen_kg} kg` : null },
-      { label: 'Mode de vente',    value: this.modeVenteLabel },
-      { label: 'Disponibilité',    value: s.date_disponibilite ? this.formatDate(s.date_disponibilite) : null },
-      { label: 'Localisation',     value: s.eleveur?.localisation ?? s.localisation },
+      { label: 'Race',          value: s.race },
+      { label: 'Âge',           value: s.age_semaines ? `${s.age_semaines} semaines` : null },
+      { label: 'Poids moyen',   value: s.poids_moyen_kg ? `${s.poids_moyen_kg} kg` : null },
+      { label: 'Mode de vente', value: this.modeVenteLabel },
+      { label: 'Disponibilité', value: s.date_disponibilite ? this.formatDate(s.date_disponibilite) : null },
+      { label: 'Localisation',  value: s.eleveur?.localisation ?? s.localisation },
     ];
   }
 
@@ -120,9 +131,9 @@ export class StockDetailComponent implements OnInit {
     });
   }
 
-  setPhoto(i: number): void   { this.activePhoto.set(i); }
-  prevPhoto(): void           { this.activePhoto.update(i => Math.max(0, i - 1)); }
-  nextPhoto(): void           {
+  setPhoto(i: number): void { this.activePhoto.set(i); }
+  prevPhoto(): void         { this.activePhoto.update(i => Math.max(0, i - 1)); }
+  nextPhoto(): void         {
     const max = (this.stock()?.photos?.length ?? 1) - 1;
     this.activePhoto.update(i => Math.min(max, i + 1));
   }
@@ -147,27 +158,36 @@ export class StockDetailComponent implements OnInit {
     return map[this.stock()?.mode_vente ?? ''] ?? '';
   }
 
-  commander(): void {
+  // ── Ouvrir le modal ───────────────────────────────────────
+  ouvrirModal(): void {
     if (!this.auth.isLoggedIn()) {
       this.router.navigate(['/auth/login']);
       return;
     }
+    this.commandeError.set('');
+    this.commandeSuccess.set(false);
+    this.showCommandeModal.set(true);
+  }
+
+  // ── Soumettre la commande ─────────────────────────────────
+  commander(): void {
     const s = this.stock();
     if (!s) return;
 
     this.commandeLoading.set(true);
     this.commandeError.set('');
 
-    this.http.post(`${environment.apiUrl}/commandes`, {
-      stock_id: s.id,
-      quantite: this.quantite(),
+    this.http.post(`${environment.apiUrl}/acheteur/commandes`, {
+      stock_id:          s.id,
+      quantite:          this.quantite(),
+      adresse_livraison: this.adresseLivraison(),
+      mode_paiement:     this.modePaiement(),
     }).subscribe({
-      next: (res: any) => {
+      next: () => {
         this.commandeLoading.set(false);
         this.commandeSuccess.set(true);
-        setTimeout(() => {
-          this.router.navigate(['/acheteur/commandes']);
-        }, 2000);
+        this.showCommandeModal.set(false);
+        setTimeout(() => this.router.navigate(['/acheteur/commandes']), 2000);
       },
       error: (err) => {
         this.commandeLoading.set(false);

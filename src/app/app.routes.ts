@@ -45,6 +45,18 @@ export const routes: Routes = [
           .then(m => m.EleveurProfileComponent),
         title: 'Profil éleveur — MACIF CHICKEN',
       },
+      {
+        path: 'eleveurs',
+        loadComponent: () => import('./features/public/eleveurs/eleveurs.component')
+          .then(m => m.EleveursComponent),
+        title: 'Nos éleveurs — MACIF CHICKEN',
+      },
+      {
+        path: 'tarifs',
+        loadComponent: () => import('./features/public/tarifs/tarifs.component')
+          .then(m => m.TarifsComponent),
+        title: 'Tarifs — MACIF CHICKEN',
+      },
     ],
   },
 
@@ -109,10 +121,34 @@ export const routes: Routes = [
         title: 'Mes stocks — Éleveur',
       },
       {
+        path: 'stocks/nouveau',
+        loadComponent: () => import('./features/dashboard/eleveur/stocks/nouveau/eleveur-stock-nouveau.component')
+          .then(m => m.EleveurStockNouveauComponent),
+        title: 'Publier un stock — Éleveur',
+      },
+      {
         path: 'commandes',
         loadComponent: () => import('./features/dashboard/eleveur/commandes/eleveur-commandes.component')
           .then(m => m.EleveurCommandesComponent),
         title: 'Commandes reçues — Éleveur',
+      },
+      {
+        path: 'avis',
+        loadComponent: () => import('./features/dashboard/eleveur/avis/eleveur-avis.component')
+          .then(m => m.EleveurAvisComponent),
+        title: 'Avis reçus — Éleveur',
+      },
+      {
+        path: 'abonnement',
+        loadComponent: () => import('./features/dashboard/eleveur/abonnement/eleveur-abonnement.component')
+          .then(m => m.EleveurAbonnementComponent),
+        title: 'Mon abonnement — Éleveur',
+      },
+      {
+        path: 'profil',
+        loadComponent: () => import('./features/dashboard/eleveur/profil/eleveur-profil.component')
+          .then(m => m.EleveurProfilComponent),
+        title: 'Mon profil — Éleveur',
       },
       {
         path: '',

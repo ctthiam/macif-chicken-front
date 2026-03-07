@@ -276,7 +276,7 @@ export class AcheteurCommandesComponent implements OnInit {
 
   load(): void {
     this.loading.set(true);
-    let url = `${environment.apiUrl}/commandes?per_page=20`;
+    let url = `${environment.apiUrl}/acheteur/commandes?per_page=20`;
     if (this.filtreStatut()) url += `&statut=${this.filtreStatut()}`;
     this.http.get<any>(url).subscribe({
       next: (res) => {
@@ -290,7 +290,7 @@ export class AcheteurCommandesComponent implements OnInit {
 
   annuler(cmd: Commande): void {
     if (!confirm('Annuler cette commande ?')) return;
-    this.http.put(`${environment.apiUrl}/commandes/${cmd.id}/annuler`, {}).subscribe({
+    this.http.put(`${environment.apiUrl}/acheteur/commandes/${cmd.id}/annuler`, {}).subscribe({
       next: () => this.commandes.update(list => list.map(c => c.id === cmd.id ? { ...c, statut: 'annulee' } : c)),
       error: () => {},
     });

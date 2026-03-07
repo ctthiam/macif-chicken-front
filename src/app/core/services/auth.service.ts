@@ -17,6 +17,7 @@ export interface User {
   is_verified:    boolean;
   is_certified?:  boolean;
   adresse_defaut?: string;
+    adresse?:        string; // ← ajouter
   avatar?:        string;
 }
 
@@ -55,13 +56,13 @@ export class AuthService {
   ) {}
 
   // ── Login ─────────────────────────────────────────────────
-  login(payload: LoginPayload): Observable<any> {
-    return this.http.post(`${this.api}/auth/login`, payload).pipe(
-      tap((res: any) => {
-        this._setSession(res.data.token, res.data.user);
-      })
+login(payload: LoginPayload): Observable<any> {
+    return this.http.post(`${this.api}/auth/login`, payload, { withCredentials: true }).pipe(
+        tap((res: any) => {
+            this._setSession(res.data.token, res.data.user);
+        })
     );
-  }
+}
 
   // ── Register ──────────────────────────────────────────────
   register(payload: RegisterPayload): Observable<any> {
@@ -106,8 +107,9 @@ export class AuthService {
 
   private _loadUser(): User | null {
     const raw = localStorage.getItem('user');
-    return raw ? JSON.parse(raw) : null;
-  }
+    if (!raw || raw === 'undefined') return null; // ← ajouter cette vérification
+    return JSON.parse(raw);
+}
 
   redirectAfterLogin(): void {
     const role = this._user()?.role;

@@ -62,7 +62,7 @@ export class AcheteurFavorisComponent implements OnInit {
   ngOnInit(): void { this.load(); }
 
   load(): void {
-    this.http.get<any>(`${environment.apiUrl}/acheteur/favoris`).subscribe({
+    this.http.get<any>(`${environment.apiUrl}/favoris`).subscribe({
       next:  (res) => { this.stocks.set(res.data ?? []); this.loading.set(false); },
       error: ()    => this.loading.set(false),
     });

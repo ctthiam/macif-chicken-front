@@ -36,7 +36,7 @@ interface Stock {
       <h1 class="font-display text-2xl font-extrabold text-neutral-900">Mes stocks</h1>
       <p class="text-neutral-500 text-sm mt-0.5">{{ total() }} annonce{{ total() > 1 ? 's' : '' }} publiée{{ total() > 1 ? 's' : '' }}</p>
     </div>
-    <a routerLink="nouveau"
+    <a routerLink="/eleveur/stocks/nouveau"
        class="inline-flex items-center gap-2 bg-primary text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-primary-800 shadow-md transition-all text-sm">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
@@ -67,7 +67,7 @@ interface Stock {
       <span class="text-6xl">📦</span>
       <h3 class="font-display font-bold text-neutral-900 text-xl mt-4 mb-2">Aucun stock</h3>
       <p class="text-neutral-500 text-sm mb-6">Publiez votre premier stock pour commencer à vendre.</p>
-      <a routerLink="nouveau"
+      <a routerLink="/eleveur/stocks/nouveau"
          class="inline-flex items-center gap-2 bg-primary text-white font-semibold px-6 py-3 rounded-xl hover:bg-primary-800 transition-all">
         Publier un stock
       </a>

@@ -59,7 +59,7 @@ export class EleveurProfileComponent implements OnInit {
 
   loadProfil(id: string): void {
     this.loading.set(true);
-    this.http.get<any>(`${environment.apiUrl}/eleveurs/${id}/profil`).subscribe({
+    this.http.get<any>(`${environment.apiUrl}/eleveurs/${id}/public`).subscribe({
       next:  (res) => { this.eleveur.set(res.data); this.loading.set(false); },
       error: ()    => { this.loading.set(false); this.router.navigate(['/recherche']); },
     });

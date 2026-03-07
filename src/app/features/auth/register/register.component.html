@@ -142,15 +142,56 @@
           </div>
           <div>
             <label class="input-label" for="confirm">Confirmation</label>
-            <input id="confirm" [type]="showPass() ? 'text' : 'password'"
-                   formControlName="password_confirmation" placeholder="Répétez le mot de passe"
-                   autocomplete="new-password" class="input"
-                   [class.input-error]="confirm.hasError('mismatch') && confirm.touched"/>
-            @if (confirm.hasError('mismatch') && confirm.touched) {
+            <div class="relative">
+              <input id="confirm" [type]="showConfirm() ? 'text' : 'password'"
+                     formControlName="password_confirmation" placeholder="Répétez le mot de passe"
+                     autocomplete="new-password" class="input pr-10"
+                     [class.input-error]="confirm.hasError('mismatch') && confirm.touched"/>
+              <button type="button" (click)="showConfirm.set(!showConfirm())"
+                      class="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              </button>
+            </div>
+            @if (confirm.hasError('mismatch') && confirm.dirty && confirm.touched) {
               <p class="input-error-msg">Les mots de passe ne correspondent pas.</p>
             }
           </div>
         </div>
+
+
+        <!-- Champs spécifiques au rôle -->
+        @if (role.value === 'acheteur') {
+          <div>
+            <label class="input-label" for="type-etablissement">Type d'établissement</label>
+            <select id="type-etablissement" formControlName="type" class="input"
+                    [class.input-error]="type.invalid && type.touched">
+              <option value="" disabled>Choisissez votre type…</option>
+              <option value="particulier">Particulier</option>
+              <option value="restaurant">Restaurant</option>
+              <option value="cantine">Cantine</option>
+              <option value="hotel">Hôtel</option>
+              <option value="traiteur">Traiteur</option>
+            </select>
+            @if (type.invalid && type.touched) {
+              <p class="input-error-msg">Le type d'établissement est obligatoire.</p>
+            }
+          </div>
+        }
+
+        @if (role.value === 'eleveur') {
+          <div>
+            <label class="input-label" for="nom-poulailler">Nom du poulailler</label>
+            <input id="nom-poulailler" type="text" formControlName="nom_poulailler"
+                   placeholder="ex: Ferme Diallo" class="input"
+                   [class.input-error]="nomPoulailler.invalid && nomPoulailler.touched"/>
+            @if (nomPoulailler.invalid && nomPoulailler.touched) {
+              <p class="input-error-msg">Le nom du poulailler est obligatoire.</p>
+            }
+          </div>
+        }
 
         <!-- Soumettre -->
         <button type="submit" class="btn-primary w-full h-11 text-base mt-2" [disabled]="loading()">
