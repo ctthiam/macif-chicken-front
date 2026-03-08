@@ -47,26 +47,17 @@ interface StockDetail extends Stock {
   templateUrl: './stock-detail.component.html',
 })
 export class StockDetailComponent implements OnInit {
-  stock            = signal<StockDetail | null>(null);
+  stock         = signal<StockDetail | null>(null);
   stocksSimilaires = signal<Stock[]>([]);
-  loading          = signal(true);
-  activePhoto      = signal(0);
-  quantite         = signal(1);
-  activeTab        = signal<'description'|'avis'>('description');
-  commandeLoading  = signal(false);
-  commandeSuccess  = signal(false);
-  commandeError    = signal('');
-
-  // ── Modal commande ────────────────────────────────────────
-  showCommandeModal = signal(false);
-  adresseLivraison  = signal('');
-  modePaiement      = signal('wave');
-
-  readonly modesPaiement = [
-    { value: 'wave',         label: '💙 Wave' },
-    { value: 'orange_money', label: '🟠 Orange Money' },
-    { value: 'free_money',   label: '🟢 Free Money' },
-  ];
+  loading       = signal(true);
+  activePhoto   = signal(0);
+  quantite      = signal(1);
+  activeTab     = signal<'description'|'avis'>('description');
+  commandeLoading = signal(false);
+  commandeSuccess = signal(false);
+  commandeError   = signal('');
+  favoriLoading   = signal(false);
+  isFavori        = signal(false);
 
   readonly Math = Math;
 
@@ -81,12 +72,12 @@ export class StockDetailComponent implements OnInit {
     const s = this.stock();
     if (!s) return [];
     return [
-      { label: 'Race',          value: s.race },
-      { label: 'Âge',           value: s.age_semaines ? `${s.age_semaines} semaines` : null },
-      { label: 'Poids moyen',   value: s.poids_moyen_kg ? `${s.poids_moyen_kg} kg` : null },
-      { label: 'Mode de vente', value: this.modeVenteLabel },
-      { label: 'Disponibilité', value: s.date_disponibilite ? this.formatDate(s.date_disponibilite) : null },
-      { label: 'Localisation',  value: s.eleveur?.localisation ?? s.localisation },
+      { label: 'Race',             value: s.race },
+      { label: 'Âge',              value: s.age_semaines ? `${s.age_semaines} semaines` : null },
+      { label: 'Poids moyen',      value: s.poids_moyen_kg ? `${s.poids_moyen_kg} kg` : null },
+      { label: 'Mode de vente',    value: this.modeVenteLabel },
+      { label: 'Disponibilité',    value: s.date_disponibilite ? this.formatDate(s.date_disponibilite) : null },
+      { label: 'Localisation',     value: s.eleveur?.localisation ?? s.localisation },
     ];
   }
 
@@ -101,6 +92,27 @@ export class StockDetailComponent implements OnInit {
     public  auth:   AuthService,
   ) {}
 
+  toggleFavori(): void {
+    const s = this.stock();
+    if (!s || !this.auth.isLoggedIn()) {
+      this.router.navigate(['/auth/login']); return;
+    }
+    this.favoriLoading.set(true);
+    const eleveurId = s.eleveur?.id;
+    if (!eleveurId) return;
+    if (this.isFavori()) {
+      this.http.delete(`${environment.apiUrl}/acheteur/favoris/${eleveurId}`).subscribe({
+        next: () => { this.isFavori.set(false); this.favoriLoading.set(false); },
+        error: () => this.favoriLoading.set(false),
+      });
+    } else {
+      this.http.post(`${environment.apiUrl}/acheteur/favoris/${eleveurId}`, {}).subscribe({
+        next: () => { this.isFavori.set(true); this.favoriLoading.set(false); },
+        error: () => this.favoriLoading.set(false),
+      });
+    }
+  }
+
   ngOnInit(): void {
     this.route.params.subscribe(p => {
       this.loadStock(p['id']);
@@ -114,6 +126,16 @@ export class StockDetailComponent implements OnInit {
     this.http.get<any>(`${environment.apiUrl}/stocks/${id}`).subscribe({
       next: (res) => {
         this.stock.set(res.data);
+        // Vérifier si cet éleveur est déjà en favori
+        if (this.auth.isLoggedIn() && res.data?.eleveur?.id) {
+          this.http.get<any>(`${environment.apiUrl}/acheteur/favoris`).subscribe({
+            next: (r) => {
+              const ids = (r.data ?? []).map((f: any) => f.eleveur_id);
+              this.isFavori.set(ids.includes(res.data.eleveur.id));
+            },
+            error: () => {},
+          });
+        }
         this.loading.set(false);
         this.loadSimilaires(res.data);
       },
@@ -131,9 +153,9 @@ export class StockDetailComponent implements OnInit {
     });
   }
 
-  setPhoto(i: number): void { this.activePhoto.set(i); }
-  prevPhoto(): void         { this.activePhoto.update(i => Math.max(0, i - 1)); }
-  nextPhoto(): void         {
+  setPhoto(i: number): void   { this.activePhoto.set(i); }
+  prevPhoto(): void           { this.activePhoto.update(i => Math.max(0, i - 1)); }
+  nextPhoto(): void           {
     const max = (this.stock()?.photos?.length ?? 1) - 1;
     this.activePhoto.update(i => Math.min(max, i + 1));
   }
@@ -158,19 +180,11 @@ export class StockDetailComponent implements OnInit {
     return map[this.stock()?.mode_vente ?? ''] ?? '';
   }
 
-  // ── Ouvrir le modal ───────────────────────────────────────
-  ouvrirModal(): void {
+  commander(): void {
     if (!this.auth.isLoggedIn()) {
       this.router.navigate(['/auth/login']);
       return;
     }
-    this.commandeError.set('');
-    this.commandeSuccess.set(false);
-    this.showCommandeModal.set(true);
-  }
-
-  // ── Soumettre la commande ─────────────────────────────────
-  commander(): void {
     const s = this.stock();
     if (!s) return;
 
@@ -178,16 +192,15 @@ export class StockDetailComponent implements OnInit {
     this.commandeError.set('');
 
     this.http.post(`${environment.apiUrl}/acheteur/commandes`, {
-      stock_id:          s.id,
-      quantite:          this.quantite(),
-      adresse_livraison: this.adresseLivraison(),
-      mode_paiement:     this.modePaiement(),
+      stock_id: s.id,
+      quantite: this.quantite(),
     }).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.commandeLoading.set(false);
         this.commandeSuccess.set(true);
-        this.showCommandeModal.set(false);
-        setTimeout(() => this.router.navigate(['/acheteur/commandes']), 2000);
+        setTimeout(() => {
+          this.router.navigate(['/acheteur/commandes']);
+        }, 2000);
       },
       error: (err) => {
         this.commandeLoading.set(false);

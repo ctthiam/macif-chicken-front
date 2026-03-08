@@ -11,8 +11,14 @@ import { LoadingSpinnerComponent } from '../../../../shared/components/loading-s
 import { environment }    from '../../../../environments/environment';
 
 interface Commande {
-  id: number; reference: string; statut: string; montant: number; created_at: string;
-  acheteur: { name: string }; eleveur: { name: string }; stock: { titre: string };
+  id:               number;
+  reference:        string | null;
+  statut_commande:  string;
+  montant_total:    number;
+  created_at:       string;
+  acheteur:         { name: string };
+  eleveur:          { name: string };
+  stock:            { titre: string };
 }
 
 @Component({
@@ -62,8 +68,8 @@ interface Commande {
               <td class="px-5 py-3.5 text-xs text-neutral-600 hidden md:table-cell max-w-32"><p class="truncate">{{ c.stock.titre }}</p></td>
               <td class="px-5 py-3.5 text-sm text-neutral-700 hidden sm:table-cell">{{ c.acheteur.name }}</td>
               <td class="px-5 py-3.5 text-sm text-neutral-700 hidden lg:table-cell">{{ c.eleveur.name }}</td>
-              <td class="px-5 py-3.5 font-semibold text-neutral-900">{{ formatMontant(c.montant) }}</td>
-              <td class="px-5 py-3.5"><app-badge-status [status]="c.statut" type="commande" /></td>
+              <td class="px-5 py-3.5 font-semibold text-neutral-900">{{ formatMontant(c.montant_total) }}</td>
+              <td class="px-5 py-3.5"><app-badge-status [status]="c.statut_commande" type="commande" /></td>
             </tr>
           }
         </tbody>

@@ -14,9 +14,9 @@ import { environment }    from '../../../../environments/environment';
 interface Commande {
   id:          number;
   reference:   string;
-  statut:      string;
+  statut_commande: string;
   quantite:    number;
-  montant:     number;
+  montant_total:   number;
   created_at:  string;
   avis_donne:  boolean;
   stock:       { id: number; titre: string; photos: string[] };
@@ -71,7 +71,7 @@ interface Commande {
               <span class="font-mono text-xs bg-white border border-neutral-200 px-2 py-1 rounded-lg text-neutral-700 font-semibold">
                 #{{ cmd.reference ?? cmd.id }}
               </span>
-              <app-badge-status [status]="cmd.statut" type="commande" />
+              <app-badge-status [status]="cmd.statut_commande" type="commande" />
             </div>
             <span class="text-xs text-neutral-400">{{ formatDate(cmd.created_at) }}</span>
           </div>
@@ -107,7 +107,7 @@ interface Commande {
 
               <!-- Montant -->
               <div class="text-right shrink-0">
-                <p class="text-lg font-extrabold text-primary">{{ formatMontant(cmd.montant) }}</p>
+                <p class="text-lg font-extrabold text-primary">{{ formatMontant(cmd.montant_total) }}</p>
               </div>
             </div>
 
@@ -121,7 +121,7 @@ interface Commande {
               </a>
 
               <!-- Annuler si confirmée -->
-              @if (cmd.statut === 'confirmee') {
+              @if (cmd.statut_commande === 'confirmee') {
                 <button (click)="annuler(cmd)"
                         class="text-xs font-semibold bg-red-50 text-red-600 px-3 py-2 rounded-lg hover:bg-red-100 transition-all">
                   Annuler la commande
@@ -129,7 +129,7 @@ interface Commande {
               }
 
               <!-- Donner un avis si livrée et pas encore d'avis -->
-              @if (cmd.statut === 'livree' && !cmd.avis_donne) {
+              @if (cmd.statut_commande === 'livree' && !cmd.avis_donne) {
                 <button (click)="ouvrirAvis(cmd)"
                         class="text-xs font-semibold bg-accent text-white px-3 py-2 rounded-lg hover:bg-accent-700 transition-all">
                   ⭐ Laisser un avis
@@ -148,19 +148,19 @@ interface Commande {
           </div>
 
           <!-- Timeline statut -->
-          @if (['confirmee','en_preparation','en_livraison','livree'].includes(cmd.statut)) {
+          @if (['confirmee','en_preparation','en_livraison','livree'].includes(cmd.statut_commande)) {
             <div class="px-5 pb-5">
               <div class="flex items-center gap-1">
                 @for (s of timeline; track s.statut) {
                   <div class="flex-1 flex flex-col items-center gap-1">
                     <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs transition-all"
-                         [class]="isStepDone(cmd.statut, s.statut)
+                         [class]="isStepDone(cmd.statut_commande, s.statut)
                            ? 'bg-primary text-white'
-                           : cmd.statut === s.statut
+                           : cmd.statut_commande === s.statut
                              ? 'bg-primary-100 border-2 border-primary text-primary'
                              : 'bg-neutral-100 text-neutral-400'"
                     >
-                      @if (isStepDone(cmd.statut, s.statut)) {
+                      @if (isStepDone(cmd.statut_commande, s.statut)) {
                         <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                           <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                         </svg>
@@ -169,13 +169,13 @@ interface Commande {
                       }
                     </div>
                     <p class="text-xs text-center leading-tight"
-                       [class]="cmd.statut === s.statut ? 'text-primary font-semibold' : 'text-neutral-400'">
+                       [class]="cmd.statut_commande === s.statut ? 'text-primary font-semibold' : 'text-neutral-400'">
                       {{ s.label }}
                     </p>
                   </div>
                   @if (!$last) {
                     <div class="flex-1 h-0.5 mb-4 transition-all"
-                         [class]="isStepDone(cmd.statut, s.statut) ? 'bg-primary' : 'bg-neutral-200'">
+                         [class]="isStepDone(cmd.statut_commande, s.statut) ? 'bg-primary' : 'bg-neutral-200'">
                     </div>
                   }
                 }
@@ -290,7 +290,7 @@ export class AcheteurCommandesComponent implements OnInit {
 
   annuler(cmd: Commande): void {
     if (!confirm('Annuler cette commande ?')) return;
-    this.http.put(`${environment.apiUrl}/acheteur/commandes/${cmd.id}/annuler`, {}).subscribe({
+    this.http.delete(`${environment.apiUrl}/acheteur/commandes/${cmd.id}`).subscribe({
       next: () => this.commandes.update(list => list.map(c => c.id === cmd.id ? { ...c, statut: 'annulee' } : c)),
       error: () => {},
     });
@@ -309,7 +309,6 @@ export class AcheteurCommandesComponent implements OnInit {
     this.avisSubmitting.set(true);
     this.http.post(`${environment.apiUrl}/avis`, {
       commande_id:  cmd.id,
-      eleveur_id:   cmd.eleveur.id,
       note:         this.avisForm.value.note,
       commentaire:  this.avisForm.value.commentaire,
     }).subscribe({
@@ -326,7 +325,7 @@ export class AcheteurCommandesComponent implements OnInit {
   }
 
   isStepDone(current: string, step: string): boolean {
-    const order = (s: string) => this.timeline.find(t => t.statut === s)?.order ?? 0;
+    const order = (s: string) => this.timeline.find(t => t.statut === s)?.order ?? 0; // statut = step key
     return order(current) > order(step);
   }
 

@@ -12,29 +12,36 @@ import { AuthService }    from '../../../../core/services/auth.service';
 import { environment }    from '../../../../environments/environment';
 
 interface DashboardData {
-  kpis: {
-    total_commandes:   number;
-    commandes_en_cours:number;
-    total_depense:     number;
-    eleveurs_favoris:  number;
+  commandes: {
+    total:      number;
+    par_statut: Record<string, number>;
+    dernieres:  {
+      id:              number;
+      statut_commande: string;
+      montant_total:   number;
+      quantite:        number;
+      stock_titre:     string | null;
+      eleveur_nom:     string | null;
+      created_at:      string;
+    }[];
   };
-  commandes_recentes: {
-    id:         number;
-    reference:  string;
-    statut:     string;
-    montant:    number;
-    created_at: string;
-    stock:      { titre: string; photos: string[] };
-    eleveur:    { name: string; localisation: string };
-  }[];
-  stocks_favoris: {
-    id:       number;
-    titre:    string;
-    prix_par_kg: number;
-    statut:   string;
-    photos:   string[];
-    eleveur:  { name: string };
-  }[];
+  depenses: {
+    mois_en_cours: number;
+    annee:         number;
+    mois:          number;
+    annee_label:   number;
+  };
+  favoris: {
+    total:   number;
+    eleveurs: {
+      eleveur_id:     number;
+      nom:            string | null;
+      nom_poulailler: string | null;
+      localisation:   string | null;
+      note_moyenne:   number | null;
+      is_certified:   boolean;
+    }[];
+  };
 }
 
 @Component({
@@ -70,13 +77,16 @@ export class AcheteurDashboardComponent implements OnInit {
   }
 
   get kpiCards() {
-    const k = this.data()?.kpis;
-    if (!k) return [];
+    const d = this.data();
+    if (!d) return [];
+    const enCours = (d.commandes.par_statut['confirmee'] ?? 0)
+                  + (d.commandes.par_statut['en_preparation'] ?? 0)
+                  + (d.commandes.par_statut['en_livraison'] ?? 0);
     return [
-      { title: 'Total commandes',    value: k.total_commandes,    icon: '🛒', color: 'green'  as const, route: '/acheteur/commandes' },
-      { title: 'En cours',           value: k.commandes_en_cours, icon: '🚚', color: 'orange' as const, route: '/acheteur/commandes' },
-      { title: 'Total dépensé',      value: new Intl.NumberFormat('fr-SN').format(k.total_depense), unit: 'FCFA', icon: '💰', color: 'blue' as const },
-      { title: 'Éleveurs favoris',   value: k.eleveurs_favoris,   icon: '❤️', color: 'red'    as const, route: '/acheteur/favoris' },
+      { title: 'Total commandes',  value: d.commandes.total,                                                         icon: '🛒', color: 'green'  as const, route: '/acheteur/commandes' },
+      { title: 'En cours',         value: enCours,                                                                   icon: '🚚', color: 'orange' as const, route: '/acheteur/commandes' },
+      { title: 'Dépenses du mois', value: new Intl.NumberFormat('fr-SN').format(d.depenses.mois_en_cours), unit: 'FCFA', icon: '💰', color: 'blue'   as const },
+      { title: 'Éleveurs favoris', value: d.favoris.total,                                                           icon: '❤️', color: 'red'    as const, route: '/acheteur/favoris' },
     ];
   }
 

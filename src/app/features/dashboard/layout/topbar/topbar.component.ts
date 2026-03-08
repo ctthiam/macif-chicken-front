@@ -13,7 +13,7 @@ interface Notification {
   type:       string;
   titre:      string;
   message:    string;
-  is_lu:      boolean;
+  is_read:    boolean;
   created_at: string;
 }
 
@@ -38,6 +38,31 @@ export class TopbarComponent implements OnInit {
     private http: HttpClient,
   ) {}
 
+  get profilRoute(): string {
+    const role = this.auth.user()?.role;
+    if (role === 'eleveur')  return '/eleveur/profil';
+    if (role === 'acheteur') return '/acheteur/profil';
+    if (role === 'admin')    return '/admin/parametres';
+    return '/';
+  }
+
+  get notificationsRoute(): string {
+    const role = this.auth.user()?.role;
+    if (role === 'eleveur')  return '/eleveur/notifications';
+    if (role === 'acheteur') return '/acheteur/notifications';
+    if (role === 'admin')    return '/admin/notifications';
+    return '/';
+  }
+
+  get parametresRoute(): string {
+    const role = this.auth.user()?.role;
+    if (role === 'eleveur')  return '/eleveur/parametres';
+    if (role === 'acheteur') return '/acheteur/parametres';
+    if (role === 'admin')    return '/admin/parametres';
+    return '/';
+  }
+
+
   ngOnInit(): void {
     this.loadNotifications();
   }
@@ -56,7 +81,7 @@ export class TopbarComponent implements OnInit {
     this.http.put(`${environment.apiUrl}/notifications/${id}/lu`, {}).subscribe({
       next: () => {
         this.notifications.update(list =>
-          list.map(n => n.id === id ? { ...n, is_lu: true } : n)
+          list.map(n => n.id === id ? { ...n, is_read: true } : n)
         );
         this.unreadCount.update(c => Math.max(0, c - 1));
       },
@@ -66,7 +91,7 @@ export class TopbarComponent implements OnInit {
   markAllRead(): void {
     this.http.put(`${environment.apiUrl}/notifications/tout-lire`, {}).subscribe({
       next: () => {
-        this.notifications.update(list => list.map(n => ({ ...n, is_lu: true })));
+        this.notifications.update(list => list.map(n => ({ ...n, is_read: true })));
         this.unreadCount.set(0);
       },
     });

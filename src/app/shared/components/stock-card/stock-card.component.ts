@@ -2,9 +2,9 @@
 // Fichier : src/app/shared/components/stock-card/stock-card.component.ts
 // Usage   : <app-stock-card [stock]="stock" (commanderClick)="onCommander($event)" />
 // ============================================================
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule }      from '@angular/common';
-import { RouterModule }      from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { BadgeStatusComponent } from '../badge-status/badge-status.component';
 import { RatingStarsComponent } from '../rating-stars/rating-stars.component';
 
@@ -163,8 +163,10 @@ export class StockCardComponent {
     return map[this.stock.mode_vente] ?? this.stock.mode_vente;
   }
 
+  private router = inject(Router);
+
   navigateToDetail(): void {
-    // Navigation gérée via routerLink ou programmatiquement
+    this.router.navigate(['/stocks', this.stock.id]);
   }
 
   onCommander(): void {

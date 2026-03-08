@@ -9,13 +9,13 @@ import { LoadingSpinnerComponent } from '../../../../shared/components/loading-s
 import { environment }    from '../../../../environments/environment';
 
 interface Avis {
-  id:         number;
-  note:       number;
+  id:          number;
+  note:        number;
   commentaire: string;
-  reponse:    string | null;
-  created_at: string;
-  acheteur:   { name: string };
-  stock:      { titre: string };
+  reply:       string | null;
+  created_at:  string;
+  auteur:      { id: number; name: string; avatar: string | null };
+  commande:    { id: number; created_at: string };
 }
 
 @Component({
@@ -69,13 +69,13 @@ interface Avis {
             <div class="flex items-start gap-4">
               <!-- Avatar -->
               <div class="w-10 h-10 bg-accent rounded-xl flex items-center justify-center shrink-0 shadow-sm">
-                <span class="text-sm font-bold text-white">{{ a.acheteur.name[0].toUpperCase() }}</span>
+                <span class="text-sm font-bold text-white">{{ a.auteur?.name?.[0]?.toUpperCase() ?? '?' }}</span>
               </div>
               <div>
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="font-semibold text-neutral-900 text-sm">{{ a.acheteur.name }}</span>
+                  <span class="font-semibold text-neutral-900 text-sm">{{ a.auteur?.name ?? "Acheteur" }}</span>
                   <span class="text-neutral-400 text-xs">•</span>
-                  <span class="text-xs text-neutral-500">{{ a.stock.titre }}</span>
+                  <span class="text-xs text-neutral-500">{{ "Commande #" + a.commande?.id }}</span>
                 </div>
                 <!-- Étoiles -->
                 <div class="flex gap-0.5 mt-1">
@@ -88,10 +88,10 @@ interface Avis {
                 </div>
                 <p class="text-sm text-neutral-700 mt-2">{{ a.commentaire }}</p>
                 <!-- Réponse existante -->
-                @if (a.reponse) {
+                @if (a.reply) {
                   <div class="mt-3 pl-4 border-l-2 border-primary-200 bg-primary-50 rounded-r-xl py-2 pr-3">
                     <p class="text-xs font-semibold text-primary-700 mb-0.5">Votre réponse</p>
-                    <p class="text-sm text-neutral-700">{{ a.reponse }}</p>
+                    <p class="text-sm text-neutral-700">{{ a.reply }}</p>
                   </div>
                 }
               </div>
@@ -100,7 +100,7 @@ interface Avis {
           </div>
 
           <!-- Répondre -->
-          @if (!a.reponse) {
+          @if (!a.reply) {
             <div class="mt-4 pt-4 border-t border-neutral-100">
               @if (replyingTo() === a.id) {
                 <div class="flex gap-3">
@@ -171,10 +171,10 @@ export class EleveurAvisComponent implements OnInit {
 
   submitReply(avisId: number): void {
     if (!this.replyText.trim()) return;
-    this.http.put(`${environment.apiUrl}/eleveur/avis/${avisId}/reply`, { reponse: this.replyText }).subscribe({
+    this.http.put(`${environment.apiUrl}/eleveur/avis/${avisId}/reply`, { reply: this.replyText }).subscribe({
       next: () => {
         this.avis.update(list =>
-          list.map(a => a.id === avisId ? { ...a, reponse: this.replyText } : a)
+          list.map(a => a.id === avisId ? { ...a, reply: this.replyText } : a)
         );
         this.replyingTo.set(null);
         this.replyText = '';

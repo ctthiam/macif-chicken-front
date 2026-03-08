@@ -133,6 +133,12 @@ export const routes: Routes = [
         title: 'Commandes reçues — Éleveur',
       },
       {
+        path: 'commandes/:id',
+        loadComponent: () => import('./features/dashboard/eleveur/commande-detail/eleveur-commande-detail.component')
+          .then(m => m.EleveurCommandeDetailComponent),
+        title: 'Détail commande — Éleveur',
+      },
+      {
         path: 'avis',
         loadComponent: () => import('./features/dashboard/eleveur/avis/eleveur-avis.component')
           .then(m => m.EleveurAvisComponent),
@@ -149,6 +155,19 @@ export const routes: Routes = [
         loadComponent: () => import('./features/dashboard/eleveur/profil/eleveur-profil.component')
           .then(m => m.EleveurProfilComponent),
         title: 'Mon profil — Éleveur',
+      },
+      
+      {
+        path: 'notifications',
+        loadComponent: () => import('.//shared/notifications/notifications.component')
+          .then(m => m.NotificationsComponent),
+        title: 'Notifications',
+      },
+            {
+        path: 'parametres',
+        loadComponent: () => import('./shared/parametres/parametres.component')
+          .then(m => m.ParametresComponent),
+        title: 'Paramètres',
       },
       {
         path: '',
@@ -177,6 +196,12 @@ export const routes: Routes = [
         title: 'Mes commandes — Acheteur',
       },
       {
+        path: 'commandes/:id',
+        loadComponent: () => import('./features/dashboard/acheteur/commande-detail/acheteur-commande-detail.component')
+          .then(m => m.AcheteurCommandeDetailComponent),
+        title: 'Détail commande — Acheteur',
+      },
+      {
         path: 'favoris',
         loadComponent: () => import('./features/dashboard/acheteur/favoris/acheteur-favoris.component')
           .then(m => m.AcheteurFavorisComponent),
@@ -187,6 +212,19 @@ export const routes: Routes = [
         loadComponent: () => import('./features/dashboard/acheteur/profil/acheteur-profil.component')
           .then(m => m.AcheteurProfilComponent),
         title: 'Mon profil — Acheteur',
+      },
+      
+      {
+        path: 'notifications',
+        loadComponent: () => import('./shared/notifications/notifications.component')
+          .then(m => m.NotificationsComponent),
+        title: 'Notifications',
+      },
+            {
+        path: 'parametres',
+        loadComponent: () => import('./shared/parametres/parametres.component')
+          .then(m => m.ParametresComponent),
+        title: 'Paramètres',
       },
       {
         path: '',
@@ -237,6 +275,19 @@ export const routes: Routes = [
         loadComponent: () => import('./features/dashboard/admin/finances/admin-finances.component')
           .then(m => m.AdminFinancesComponent),
         title: 'Finances — Admin',
+      },
+
+      {
+        path: 'notifications',
+        loadComponent: () => import('./shared/notifications/notifications.component')
+          .then(m => m.NotificationsComponent),
+        title: 'Notifications',
+      },
+            {
+        path: 'parametres',
+        loadComponent: () => import('./shared/parametres/parametres.component')
+          .then(m => m.ParametresComponent),
+        title: 'Paramètres',
       },
       {
         path: '',

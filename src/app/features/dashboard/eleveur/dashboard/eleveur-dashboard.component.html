@@ -88,8 +88,12 @@
         <div class="space-y-3">
           @for (stock of data()!.stocks_populaires; track stock.id) {
             <div class="flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-50 transition-colors group">
-              <div class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center shrink-0">
-                <span class="text-lg">🐔</span>
+              <div class="w-10 h-10 bg-primary-100 rounded-xl overflow-hidden shrink-0 flex items-center justify-center">
+                @if (stock.photos && stock.photos.length > 0) {
+                  <img [src]="stock.photos[0]" [alt]="stock.titre" class="w-full h-full object-cover"/>
+                } @else {
+                  <span class="text-lg">🐔</span>
+                }
               </div>
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-semibold text-neutral-900 truncate">{{ stock.titre }}</p>
@@ -162,10 +166,10 @@
                   <p class="text-xs text-neutral-400">× {{ cmd.quantite }}</p>
                 </td>
                 <td class="px-6 py-4">
-                  <span class="font-semibold text-neutral-900">{{ formatMontant(cmd.montant) }}</span>
+                  <span class="font-semibold text-neutral-900">{{ formatMontant(cmd.montant_total) }}</span>
                 </td>
                 <td class="px-6 py-4">
-                  <app-badge-status [status]="cmd.statut" type="commande" />
+                  <app-badge-status [status]="cmd.statut_commande" type="commande" />
                 </td>
                 <td class="px-6 py-4 text-neutral-500 text-xs">{{ formatDate(cmd.created_at) }}</td>
               </tr>
@@ -186,8 +190,8 @@
               <p class="text-xs text-neutral-500 truncate">{{ cmd.stock.titre }} · {{ formatDate(cmd.created_at) }}</p>
             </div>
             <div class="flex flex-col items-end gap-1">
-              <span class="text-sm font-bold text-primary">{{ formatMontant(cmd.montant) }}</span>
-              <app-badge-status [status]="cmd.statut" type="commande" />
+              <span class="text-sm font-bold text-primary">{{ formatMontant(cmd.montant_total) }}</span>
+              <app-badge-status [status]="cmd.statut_commande" type="commande" />
             </div>
           </div>
         }

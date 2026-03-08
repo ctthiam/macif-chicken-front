@@ -75,10 +75,14 @@
           @for (evt of stats()!.activite_recente.slice(0, 8); track $index) {
             <div class="flex items-start gap-3">
               <div class="w-8 h-8 rounded-lg bg-neutral-100 flex items-center justify-center shrink-0 text-base">
-                {{ evt.icon }}
+                🛒
               </div>
               <div class="flex-1 min-w-0">
-                <p class="text-xs text-neutral-800 leading-snug">{{ evt.message }}</p>
+                <p class="text-xs text-neutral-800 leading-snug">
+                  Commande de <strong>{{ evt.acheteur?.name ?? '—' }}</strong>
+                  — {{ evt.stock?.titre ?? '—' }}
+                  · {{ evt.montant_total | number:'1.0-0' }} FCFA
+                </p>
                 <p class="text-xs text-neutral-400 mt-0.5">{{ formatRelative(evt.created_at) }}</p>
               </div>
             </div>
@@ -114,7 +118,7 @@
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
                   <p class="text-sm font-semibold text-neutral-900 truncate">{{ u.name }}</p>
-                  @if (u.is_certified) {
+                  @if (u.is_verified) {
                     <svg class="w-3.5 h-3.5 text-green-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
@@ -139,9 +143,9 @@
       <div class="flex items-center justify-between px-6 py-4 border-b border-neutral-100">
         <div class="flex items-center gap-2">
           <h2 class="font-display font-bold text-neutral-900">Litiges ouverts</h2>
-          @if (stats()?.kpis?.litiges_ouverts) {
+          @if (stats()!.litiges.ouverts > 0) {
             <span class="bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
-              {{ stats()!.kpis.litiges_ouverts }}
+              {{ stats()!.litiges.ouverts }}
             </span>
           }
         </div>
@@ -164,7 +168,7 @@
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-semibold text-neutral-900 truncate">{{ l.motif }}</p>
                   <p class="text-xs text-neutral-500 mt-0.5">
-                    {{ l.acheteur.name }} vs {{ l.eleveur.name }}
+                    {{ l.acheteur?.name ?? "—" }} vs {{ l.eleveur?.name ?? "—" }}
                   </p>
                 </div>
                 <div class="flex flex-col items-end gap-1 shrink-0">

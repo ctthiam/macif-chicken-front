@@ -11,14 +11,15 @@ import { LoadingSpinnerComponent } from '../../../../shared/components/loading-s
 import { environment }    from '../../../../environments/environment';
 
 interface Commande {
-  id:          number;
-  reference:   string;
-  statut:      string;
-  quantite:    number;
-  montant:     number;
-  created_at:  string;
-  acheteur:    { name: string; phone: string };
-  stock:       { titre: string; id: number };
+  id:               number;
+  reference:        string;
+  statut_commande:  string;   // champ réel API
+  statut_paiement:  string;
+  quantite:         number;
+  montant_total:    number;   // champ réel API
+  created_at:       string;
+  acheteur:         { name: string; phone: string };
+  stock:            { titre: string; id: number };
   adresse_livraison: string;
 }
 
@@ -67,7 +68,7 @@ interface Commande {
                 <span class="font-mono text-xs bg-neutral-100 px-2 py-1 rounded-lg text-neutral-700 font-semibold">
                   #{{ cmd.reference ?? cmd.id }}
                 </span>
-                <app-badge-status [status]="cmd.statut" type="commande" />
+                <app-badge-status [status]="cmd.statut_commande" type="commande" />
                 <span class="text-xs text-neutral-400">{{ formatDate(cmd.created_at) }}</span>
               </div>
               <div class="flex items-center gap-2">
@@ -95,29 +96,29 @@ interface Commande {
 
             <!-- Montant + Actions -->
             <div class="flex sm:flex-col items-center sm:items-end gap-3 sm:gap-2 shrink-0">
-              <span class="text-lg font-extrabold text-primary">{{ formatMontant(cmd.montant) }}</span>
+              <span class="text-lg font-extrabold text-primary">{{ formatMontant(cmd.montant_total) }}</span>
 
               <!-- Boutons selon statut -->
               <div class="flex gap-2">
-                @if (cmd.statut === 'confirmee') {
+                @if (cmd.statut_commande === 'confirmee') {
                   <button (click)="changerStatut(cmd, 'en_preparation')"
                           class="text-xs font-semibold bg-orange-100 text-orange-700 px-3 py-1.5 rounded-lg hover:bg-orange-200 transition-colors">
                     Préparer
                   </button>
                 }
-                @if (cmd.statut === 'en_preparation') {
+                @if (cmd.statut_commande === 'en_preparation') {
                   <button (click)="changerStatut(cmd, 'en_livraison')"
                           class="text-xs font-semibold bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg hover:bg-purple-200 transition-colors">
                     Livrer
                   </button>
                 }
-                @if (cmd.statut === 'en_livraison') {
+                @if (cmd.statut_commande === 'en_livraison') {
                   <button (click)="changerStatut(cmd, 'livree')"
                           class="text-xs font-semibold bg-green-100 text-green-700 px-3 py-1.5 rounded-lg hover:bg-green-200 transition-colors">
                     Confirmer livraison
                   </button>
                 }
-                @if (cmd.statut === 'confirmee') {
+                @if (cmd.statut_commande === 'confirmee') {
                   <button (click)="changerStatut(cmd, 'annulee')"
                           class="text-xs font-semibold bg-red-50 text-red-600 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors">
                     Annuler
@@ -130,6 +131,15 @@ interface Commande {
       }
     </div>
   }
+</div>
+<div>
+  <!-- Toast -->
+  @if (toast()) {
+    <div class="fixed bottom-6 right-6 bg-neutral-900 text-white text-sm font-medium px-5 py-3 rounded-2xl shadow-xl z-50 animate-fade-in">
+      {{ toast() }}
+    </div>
+  }
+
 </div>
   `,
 })
@@ -167,11 +177,34 @@ export class EleveurCommandesComponent implements OnInit {
     });
   }
 
-  changerStatut(cmd: Commande, statut: string): void {
-    this.http.put(`${environment.apiUrl}/commandes/${cmd.id}/statut`, { statut }).subscribe({
-      next: () => this.commandes.update(list => list.map(c => c.id === cmd.id ? { ...c, statut } : c)),
-      error: () => {},
+  // Map statut cible → action backend
+  private readonly actionMap: Record<string, string> = {
+    'en_preparation': 'confirmer',
+    'en_livraison':   'en_livraison',
+    'livree':         'livree',
+  };
+
+  changerStatut(cmd: Commande, statutCible: string): void {
+    const action = this.actionMap[statutCible];
+    if (!action) return;
+
+    // PUT /eleveur/commandes/:id  { action }
+    this.http.put<any>(`${environment.apiUrl}/eleveur/commandes/${cmd.id}`, { action }).subscribe({
+      next:  (res) => {
+        const nouveau = res.data?.statut_commande ?? statutCible;
+        this.commandes.update(list => list.map(c => c.id === cmd.id ? { ...c, statut_commande: nouveau } : c));
+        this.showToast(`✅ ${res.message ?? 'Statut mis à jour.'}`);
+      },
+      error: (err) => {
+        this.showToast(err.error?.message ?? 'Erreur lors du changement de statut.');
+      },
     });
+  }
+
+  toast  = signal<string | null>(null);
+  private showToast(msg: string): void {
+    this.toast.set(msg);
+    setTimeout(() => this.toast.set(null), 3500);
   }
 
   formatMontant(v: number): string {

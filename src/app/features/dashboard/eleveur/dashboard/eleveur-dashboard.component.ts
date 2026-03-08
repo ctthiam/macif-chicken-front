@@ -20,17 +20,17 @@ interface DashboardData {
     variation_commandes:number;
   };
   commandes_recentes: {
-    id:          number;
-    reference:   string;
-    statut:      string;
-    quantite:    number;
-    montant:     number;
-    created_at:  string;
-    acheteur:    { name: string };
-    stock:       { titre: string };
+    id:               number;
+    reference:        string | null;
+    statut_commande:  string;
+    quantite:         number;
+    montant_total:    number;
+    created_at:       string;
+    acheteur:         { name: string };
+    stock:            { titre: string };
   }[];
   graphique_mensuel: { mois: string; revenus: number; commandes: number }[];
-  stocks_populaires: { id: number; titre: string; vues: number; commandes: number; statut: string }[];
+  stocks_populaires: { id: number; titre: string; vues: number; commandes: number; statut: string; photos?: string[] }[];
 }
 
 @Component({

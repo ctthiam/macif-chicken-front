@@ -14,7 +14,7 @@
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
       <h1 class="font-display text-2xl font-extrabold text-neutral-900">
-        Bonjour, {{ auth.user()!.name.split(' ')[0] }} 👋
+        Bonjour, {{ (auth.user()?.name ?? '').split(' ')[0] }} 👋
       </h1>
       <p class="text-neutral-500 text-sm mt-0.5">Voici un aperçu de vos achats.</p>
     </div>
@@ -54,7 +54,7 @@
         </a>
       </div>
 
-      @if (!data()!.commandes_recentes?.length) {
+      @if (!data()!.commandes.dernieres?.length) {
         <div class="flex flex-col items-center justify-center py-16 text-center px-6">
           <span class="text-5xl mb-3">🛒</span>
           <p class="text-neutral-500 font-medium">Aucune commande pour le moment</p>
@@ -65,32 +65,26 @@
         </div>
       } @else {
         <div class="divide-y divide-neutral-50">
-          @for (cmd of data()!.commandes_recentes; track cmd.id) {
+          @for (cmd of data()!.commandes.dernieres; track cmd.id) {
             <div class="flex items-center gap-4 px-6 py-4 hover:bg-neutral-50 transition-colors"
                  [routerLink]="['/acheteur/commandes', cmd.id]">
 
               <!-- Image produit -->
               <div class="w-14 h-14 rounded-xl bg-primary-50 overflow-hidden shrink-0 flex items-center justify-center">
-                @if (cmd.stock.photos?.length) {
-                  <img [src]="cmd.stock.photos[0]" [alt]="cmd.stock.titre" class="w-full h-full object-cover"/>
-                } @else {
-                  <span class="text-2xl">🐔</span>
-                }
+                <span class="text-2xl">🐔</span>
               </div>
 
               <!-- Infos -->
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-semibold text-neutral-900 truncate">{{ cmd.stock.titre }}</p>
-                <p class="text-xs text-neutral-500 mt-0.5">
-                  {{ cmd.eleveur.name }} · {{ cmd.eleveur.localisation }}
-                </p>
+                <p class="text-sm font-semibold text-neutral-900 truncate">{{ cmd.stock_titre ?? '—' }}</p>
+                <p class="text-xs text-neutral-500 mt-0.5">{{ cmd.eleveur_nom ?? '—' }}</p>
                 <p class="text-xs text-neutral-400 mt-0.5">{{ formatDate(cmd.created_at) }}</p>
               </div>
 
               <!-- Montant + Statut -->
               <div class="flex flex-col items-end gap-1.5 shrink-0">
-                <span class="text-sm font-extrabold text-primary">{{ formatMontant(cmd.montant) }}</span>
-                <app-badge-status [status]="cmd.statut" type="commande" />
+                <span class="text-sm font-extrabold text-primary">{{ formatMontant(cmd.montant_total) }}</span>
+                <app-badge-status [status]="cmd.statut_commande" type="commande" />
               </div>
             </div>
           }
@@ -107,7 +101,7 @@
         </a>
       </div>
 
-      @if (!data()!.stocks_favoris?.length) {
+      @if (!data()!.favoris.eleveurs?.length) {
         <div class="flex flex-col items-center justify-center py-12 text-center px-5">
           <span class="text-4xl mb-2">❤️</span>
           <p class="text-sm text-neutral-500">Aucun favori</p>
@@ -117,26 +111,23 @@
         </div>
       } @else {
         <div class="divide-y divide-neutral-50">
-          @for (stock of data()!.stocks_favoris.slice(0, 4); track stock.id) {
-            <a [routerLink]="['/stocks', stock.id]"
+          @for (fav of data()!.favoris.eleveurs.slice(0, 4); track fav.eleveur_id) {
+            <a [routerLink]="['/eleveurs', fav.eleveur_id]"
                class="flex items-center gap-3 px-5 py-3 hover:bg-neutral-50 transition-colors group">
-              <div class="w-11 h-11 rounded-lg bg-primary-50 overflow-hidden shrink-0 flex items-center justify-center">
-                @if (stock.photos?.length) {
-                  <img [src]="stock.photos[0]" [alt]="stock.titre" class="w-full h-full object-cover"/>
-                } @else {
-                  <span class="text-xl">🐔</span>
-                }
+              <div class="w-11 h-11 rounded-full bg-primary-50 shrink-0 flex items-center justify-center">
+                <span class="text-xl">🧑‍🌾</span>
               </div>
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-semibold text-neutral-900 truncate group-hover:text-primary transition-colors">
-                  {{ stock.titre }}
+                  {{ fav.nom_poulailler ?? fav.nom ?? '—' }}
                 </p>
-                <p class="text-xs text-neutral-500">{{ stock.eleveur.name }}</p>
+                <p class="text-xs text-neutral-500">{{ fav.localisation ?? '' }}</p>
               </div>
-              <div class="text-right shrink-0">
-                <p class="text-sm font-bold text-primary">{{ stock.prix_par_kg | number:'1.0-0' }}</p>
-                <p class="text-xs text-neutral-400">FCFA/kg</p>
-              </div>
+              @if (fav.note_moyenne) {
+                <div class="text-right shrink-0">
+                  <p class="text-sm font-bold text-amber-500">★ {{ fav.note_moyenne | number:'1.1-1' }}</p>
+                </div>
+              }
             </a>
           }
         </div>

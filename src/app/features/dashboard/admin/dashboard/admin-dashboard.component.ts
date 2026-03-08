@@ -10,30 +10,41 @@ import { BadgeStatusComponent }    from '../../../../shared/components/badge-sta
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { environment }    from '../../../../environments/environment';
 
+type KpiColor = 'blue' | 'green' | 'orange' | 'red' | 'purple' | 'yellow';
+
 interface AdminStats {
-  kpis: {
-    total_utilisateurs:  number;
-    total_eleveurs:      number;
-    total_acheteurs:     number;
-    stocks_actifs:       number;
-    commandes_total:     number;
-    commandes_en_cours:  number;
-    revenus_plateforme:  number;
-    litiges_ouverts:     number;
-    variation_utilisateurs: number;
-    variation_revenus:      number;
+  // Champs réels retournés par GET /api/admin/dashboard
+  users: {
+    total:         number;
+    eleveurs:      number;
+    acheteurs:     number;
+    nouveaux_jour: number;
   };
-  graphique: { mois: string; utilisateurs: number; commandes: number; revenus: number }[];
+  commandes: {
+    aujourd_hui: number;
+    ce_mois:     number;
+    par_statut:  Record<string, number>;
+  };
+  revenus: {
+    commission_mois:  number;
+    commission_total: number;
+    volume_mois:      number;
+  };
+  litiges: {
+    ouverts: number;
+    total:   number;
+  };
   derniers_utilisateurs: {
     id: number; name: string; email: string; role: string;
-    is_certified: boolean; created_at: string;
+    is_verified: boolean; created_at: string;
   }[];
   derniers_litiges: {
     id: number; motif: string; statut: string; created_at: string;
-    acheteur: { name: string }; eleveur: { name: string };
+    acheteur: { name: string } | null; eleveur: { name: string } | null;
   }[];
   activite_recente: {
-    type: string; message: string; created_at: string; icon: string;
+    id: number; statut_commande: string; montant_total: number;
+    created_at: string; acheteur: { name: string } | null; stock: { titre: string } | null;
   }[];
 }
 
@@ -82,11 +93,11 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit {
 
   renderChart(): void {
     const canvas = this.chartCanvas?.nativeElement;
-    if (!canvas || !this.stats()?.graphique) return;
+    if (!canvas || !this.stats()) return; // pas de graphique dans cette version
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const data   = this.stats()!.graphique;
+    const data: any[] = []; // graphique non disponible dans l'API actuelle
     const metric = this.chartMetric();
     const values = data.map(d => d[metric] as number);
     const labels = data.map(d => d.mois);
@@ -159,16 +170,19 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit {
     return `Il y a ${Math.floor(h / 24)}j`;
   }
 
-  get kpiCards() {
-    const k = this.stats()?.kpis;
-    if (!k) return [];
+  get kpiCards(): { title: string; value: string | number; icon: string; color: KpiColor; route?: string; unit?: string; trend?: string; trendUp?: boolean }[] {
+    const s = this.stats();
+    if (!s) return [];
+    const enCours = (s.commandes.par_statut['confirmee'] ?? 0)
+                  + (s.commandes.par_statut['en_preparation'] ?? 0)
+                  + (s.commandes.par_statut['en_livraison'] ?? 0);
     return [
-      { title: 'Utilisateurs',     value: k.total_utilisateurs,  icon: '👥', color: 'blue'   as const, route: '/admin/utilisateurs', trend: k.variation_utilisateurs > 0 ? `+${k.variation_utilisateurs}` : `${k.variation_utilisateurs}`, trendUp: k.variation_utilisateurs >= 0 },
-      { title: 'Stocks actifs',    value: k.stocks_actifs,       icon: '📦', color: 'green'  as const, route: '/admin/stocks' },
-      { title: 'Commandes totales',value: k.commandes_total,     icon: '🛒', color: 'orange' as const, route: '/admin/commandes' },
-      { title: 'Litiges ouverts',  value: k.litiges_ouverts,     icon: '⚠️', color: 'red'    as const, route: '/admin/litiges' },
-      { title: 'Revenus plateforme',value: new Intl.NumberFormat('fr-SN').format(k.revenus_plateforme), unit: 'FCFA', icon: '💰', color: 'purple' as const, trend: k.variation_revenus > 0 ? `+${k.variation_revenus}%` : `${k.variation_revenus}%`, trendUp: k.variation_revenus >= 0 },
-      { title: 'En cours',         value: k.commandes_en_cours,  icon: '🚚', color: 'yellow' as const, route: '/admin/commandes' },
+      { title: 'Utilisateurs',          value: s.users.total,          icon: '👥', color: 'blue'   as KpiColor, route: '/admin/utilisateurs' },
+      { title: "Nouveaux aujourd'hui",   value: s.users.nouveaux_jour,  icon: '🆕', color: 'green'  as KpiColor, route: '/admin/utilisateurs' },
+      { title: 'Commandes du mois',     value: s.commandes.ce_mois,    icon: '🛒', color: 'orange' as KpiColor, route: '/admin/commandes' },
+      { title: 'Litiges ouverts',       value: s.litiges.ouverts,      icon: '⚠️', color: 'red'    as KpiColor, route: '/admin/litiges' },
+      { title: 'Revenus du mois',       value: new Intl.NumberFormat('fr-SN').format(s.revenus.commission_mois), unit: 'FCFA', icon: '💰', color: 'purple' as KpiColor },
+      { title: 'Commandes en cours',    value: enCours,                icon: '🚚', color: 'yellow' as KpiColor, route: '/admin/commandes' },
     ];
   }
 

@@ -17,7 +17,7 @@ interface FinancesData {
     variation_revenus:   number;
   };
   transactions: {
-    id: number; type: string; montant: number; commission: number;
+    id: number; type: string; montant_total: number; commission_plateforme: number; montant_eleveur: number;
     created_at: string; eleveur: { name: string };
   }[];
   repartition_abonnements: { plan: string; count: number; revenus: number }[];
@@ -92,8 +92,8 @@ interface FinancesData {
                   <p class="text-xs text-neutral-400">{{ getTypeLabel(t.type) }} · {{ formatDate(t.created_at) }}</p>
                 </div>
                 <div class="text-right">
-                  <p class="text-sm font-bold text-primary">{{ formatMontant(t.montant) }}</p>
-                  <p class="text-xs text-neutral-400">Commission : {{ formatMontant(t.commission) }}</p>
+                  <p class="text-sm font-bold text-primary">{{ formatMontant(t.montant_total) }}</p>
+                  <p class="text-xs text-neutral-400">Commission : {{ formatMontant(t.commission_plateforme) }}</p>
                 </div>
               </div>
             }
