@@ -18,7 +18,7 @@ interface Avis {
   note:       number;
   commentaire:string;
   created_at: string;
-  acheteur: { name: string; };
+  auteur: { name: string; } | null;
 }
 
 interface StockDetail extends Stock {
@@ -56,10 +56,24 @@ export class StockDetailComponent implements OnInit {
   commandeLoading = signal(false);
   commandeSuccess = signal(false);
   commandeError   = signal('');
+
+  // Formulaire commande
+  adresseLivraison  = signal('');
+  modePaiement      = signal<'wave'|'orange_money'|'free_money'|''>('');
+  dateLivraison     = signal('');
+  noteLivraison     = signal('');
+  showCommandeForm  = signal(false);
+
+  readonly modesPaiement: { value: 'wave'|'orange_money'|'free_money'; label: string; logo: string }[] = [
+    { value: 'wave',         label: '🌊 Wave',         logo: 'W' },
+    { value: 'orange_money', label: '🟠 Orange Money',  logo: 'OM' },
+    { value: 'free_money',   label: '🟢 Free Money',    logo: 'FM' },
+  ];
   favoriLoading   = signal(false);
   isFavori        = signal(false);
 
-  readonly Math = Math;
+  readonly Math  = Math;
+  readonly today = new Date().toISOString().split('T')[0];
 
   readonly garanties = [
     { icon: '🔒', label: 'Paiement sécurisé via PayTech' },
@@ -163,12 +177,22 @@ export class StockDetailComponent implements OnInit {
   incrementQty(): void { this.quantite.update(q => q + 1); }
   decrementQty(): void { this.quantite.update(q => Math.max(1, q - 1)); }
 
+  get venteParUnite(): boolean {
+    const s = this.stock();
+    return !!(s?.prix_par_unite && ['unite', 'les_deux'].includes(s?.mode_vente ?? ''));
+  }
+
   get prixTotal(): number {
     const s = this.stock();
     if (!s) return 0;
-    return s.prix_par_unite
-      ? s.prix_par_unite * this.quantite()
-      : s.prix_par_kg * s.poids_moyen_kg * this.quantite();
+    // Aligner exactement avec le calcul backend
+    return this.venteParUnite
+      ? s.prix_par_unite! * this.quantite()
+      : s.prix_par_kg * (s.poids_moyen_kg ?? 1) * this.quantite();
+  }
+
+  get uniteLabel(): string {
+    return this.venteParUnite ? 'unité(s)' : 'kg';
   }
 
   get modeVenteLabel(): string {
@@ -180,11 +204,23 @@ export class StockDetailComponent implements OnInit {
     return map[this.stock()?.mode_vente ?? ''] ?? '';
   }
 
-  commander(): void {
+  ouvrirFormulaireCommande(): void {
     if (!this.auth.isLoggedIn()) {
       this.router.navigate(['/auth/login']);
       return;
     }
+    this.showCommandeForm.set(true);
+    this.commandeError.set('');
+  }
+
+  commander(): void {
+    if (!this.modePaiement()) {
+      this.commandeError.set('Veuillez choisir un mode de paiement.'); return;
+    }
+    if (!this.adresseLivraison().trim()) {
+      this.commandeError.set('Veuillez saisir votre adresse de livraison.'); return;
+    }
+
     const s = this.stock();
     if (!s) return;
 
@@ -192,8 +228,12 @@ export class StockDetailComponent implements OnInit {
     this.commandeError.set('');
 
     this.http.post(`${environment.apiUrl}/acheteur/commandes`, {
-      stock_id: s.id,
-      quantite: this.quantite(),
+      stock_id:                 s.id,
+      quantite:                 this.quantite(),
+      mode_paiement:            this.modePaiement(),
+      adresse_livraison:        this.adresseLivraison().trim(),
+      date_livraison_souhaitee: this.dateLivraison() || null,
+      note_livraison:           this.noteLivraison().trim() || null,
     }).subscribe({
       next: (res: any) => {
         this.commandeLoading.set(false);
@@ -204,7 +244,14 @@ export class StockDetailComponent implements OnInit {
       },
       error: (err) => {
         this.commandeLoading.set(false);
-        this.commandeError.set(err.error?.message ?? 'Erreur lors de la commande.');
+        const errors = err.error?.errors;
+        if (errors) {
+          // Afficher la première erreur de validation détaillée
+          const first = Object.values(errors)[0] as string[];
+          this.commandeError.set(first?.[0] ?? err.error?.message ?? 'Erreur lors de la commande.');
+        } else {
+          this.commandeError.set(err.error?.message ?? 'Erreur lors de la commande.');
+        }
       },
     });
   }

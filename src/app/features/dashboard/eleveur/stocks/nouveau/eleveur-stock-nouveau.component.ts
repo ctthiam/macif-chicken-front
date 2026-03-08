@@ -4,7 +4,7 @@
 import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule }   from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router }         from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClient }     from '@angular/common/http';
 import { environment }    from '../../../../../environments/environment';
 
@@ -24,8 +24,8 @@ import { environment }    from '../../../../../environments/environment';
       </svg>
     </button>
     <div>
-      <h1 class="font-display text-2xl font-extrabold text-neutral-900">Publier un stock</h1>
-      <p class="text-neutral-500 text-sm mt-0.5">Remplissez les informations de votre annonce</p>
+      <h1 class="font-display text-2xl font-extrabold text-neutral-900">{{ editMode() ? "Modifier l'annonce" : "Publier un stock" }}</h1>
+      <p class="text-neutral-500 text-sm mt-0.5">{{ editMode() ? "Modifiez les informations de votre annonce" : "Remplissez les informations de votre annonce" }}</p>
     </div>
   </div>
 
@@ -226,7 +226,7 @@ import { environment }    from '../../../../../environments/environment';
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
           </svg>
-          Publier l'annonce
+          {{ editMode() ? 'Enregistrer les modifications' : "Publier l'annonce" }}
         }
       </button>
     </div>
@@ -250,13 +250,17 @@ export class EleveurStockNouveauComponent implements OnInit {
   erreurAbonnement = signal<string | null>(null);
   photoPreviews = signal<string[]>([]);
   photoFiles:   File[] = [];
+  editMode    = signal(false);
+  stockId     = signal<number | null>(null);
+  loadingEdit = signal(false);
 
   readonly today = new Date().toISOString().split('T')[0];
 
   constructor(
-    private fb:   FormBuilder,
+    private fb:    FormBuilder,
     public  router: Router,
-    private http: HttpClient,
+    private http:  HttpClient,
+    private route: ActivatedRoute,
   ) {
     this.form = this.fb.group({
       titre:               ['', [Validators.required, Validators.minLength(3)]],
@@ -271,7 +275,39 @@ export class EleveurStockNouveauComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.editMode.set(true);
+      this.stockId.set(+id);
+      this.loadingEdit.set(true);
+      this.http.get<any>(`${environment.apiUrl}/eleveur/stocks/${id}`).subscribe({
+        next: (res) => {
+          const s = res.data;
+          this.form.patchValue({
+            titre:                s.titre,
+            description:          s.description,
+            quantite_disponible:  s.quantite_disponible,
+            poids_moyen_kg:       s.poids_moyen_kg,
+            prix_par_kg:          s.prix_par_kg,
+            prix_par_unite:       s.prix_par_unite,
+            mode_vente:           s.mode_vente,
+            date_disponibilite:   s.date_disponibilite,
+            date_peremption_stock: s.date_peremption_stock,
+          });
+          // Afficher les photos existantes
+          if (s.photos?.length) {
+            this.photoPreviews.set(s.photos);
+          }
+          this.loadingEdit.set(false);
+        },
+        error: () => {
+          this.loadingEdit.set(false);
+          this.router.navigate(['/eleveur/stocks']);
+        },
+      });
+    }
+  }
 
   isInvalid(field: string): boolean {
     const c = this.form.get(field);
@@ -337,8 +373,15 @@ export class EleveurStockNouveauComponent implements OnInit {
     // Photos
     this.photoFiles.forEach(f => fd.append('photos[]', f));
 
-    this.http.post<any>(`${environment.apiUrl}/eleveur/stocks`, fd)
-      .subscribe({ next: () => this.onSuccess(), error: (e) => this.onError(e) });
+    if (this.editMode() && this.stockId()) {
+      // PUT via POST + _method=PUT (Laravel method spoofing pour FormData)
+      fd.append('_method', 'PUT');
+      this.http.post<any>(`${environment.apiUrl}/eleveur/stocks/${this.stockId()}`, fd)
+        .subscribe({ next: () => this.onSuccess(), error: (e) => this.onError(e) });
+    } else {
+      this.http.post<any>(`${environment.apiUrl}/eleveur/stocks`, fd)
+        .subscribe({ next: () => this.onSuccess(), error: (e) => this.onError(e) });
+    }
   }
 
   private onSuccess(): void {

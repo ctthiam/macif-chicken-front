@@ -122,16 +122,20 @@ interface Stock {
                  class="flex-1 text-center text-xs font-semibold border border-neutral-200 text-neutral-600 py-2 rounded-lg hover:border-primary hover:text-primary transition-all">
                 Voir
               </a>
-              <a [routerLink]="['modifier', stock.id]"
+              <a [routerLink]="['/eleveur/stocks/modifier', stock.id]"
                  class="flex-1 text-center text-xs font-semibold bg-primary-50 text-primary py-2 rounded-lg hover:bg-primary hover:text-white transition-all">
                 Modifier
               </a>
               <button (click)="toggleStatut(stock)"
                       class="flex-1 text-center text-xs font-semibold py-2 rounded-lg transition-all"
                       [class]="stock.statut === 'disponible'
-                        ? 'bg-neutral-100 text-neutral-600 hover:bg-red-50 hover:text-red-600'
+                        ? 'bg-neutral-100 text-neutral-600 hover:bg-amber-50 hover:text-amber-600'
                         : 'bg-green-50 text-green-700 hover:bg-green-100'">
-                {{ stock.statut === 'disponible' ? 'Masquer' : 'Activer' }}
+                {{ stock.statut === 'disponible' ? '👁 Masquer' : '✅ Activer' }}
+              </button>
+              <button (click)="deleteStock(stock)"
+                      class="flex-1 text-center text-xs font-semibold py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-all">
+                🗑 Supprimer
               </button>
             </div>
           </div>
@@ -153,7 +157,7 @@ export class EleveurStocksComponent implements OnInit {
     { value: 'disponible', label: '✅ Disponibles' },
     { value: 'reserve',    label: '🔒 Réservés' },
     { value: 'epuise',     label: '❌ Épuisés' },
-    { value: 'masque',     label: '👁 Masqués' },
+    { value: 'expire',     label: '👁 Masqués' },
   ];
 
   constructor(private http: HttpClient) {}
@@ -176,10 +180,21 @@ export class EleveurStocksComponent implements OnInit {
   }
 
   toggleStatut(stock: Stock): void {
-    const newStatut = stock.statut === 'disponible' ? 'masque' : 'disponible';
+    const newStatut = stock.statut === 'disponible' ? 'expire' : 'disponible';
     this.http.put(`${environment.apiUrl}/eleveur/stocks/${stock.id}`, { statut: newStatut }).subscribe({
       next: () => this.stocks.update(list => list.map(s => s.id === stock.id ? { ...s, statut: newStatut } : s)),
       error: () => {},
+    });
+  }
+
+  deleteStock(stock: Stock): void {
+    if (!confirm(`Supprimer définitivement "${stock.titre}" ? Cette action est irréversible.`)) return;
+    this.http.delete(`${environment.apiUrl}/eleveur/stocks/${stock.id}`).subscribe({
+      next: () => {
+        this.stocks.update(list => list.filter(s => s.id !== stock.id));
+        this.total.update(t => t - 1);
+      },
+      error: () => alert('Erreur lors de la suppression.'),
     });
   }
 }

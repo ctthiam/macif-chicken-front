@@ -167,30 +167,30 @@ export class NotificationsComponent implements OnInit {
   page          = signal(1);
 
   readonly filtres = [
-    { value: '',           label: 'Toutes' },
-    { value: 'commande',   label: '📦 Commandes' },
-    { value: 'paiement',   label: '💰 Paiements' },
-    { value: 'litige',     label: '⚠️ Litiges' },
-    { value: 'avis',       label: '⭐ Avis' },
-    { value: 'systeme',    label: '🔧 Système' },
+    { value: '',             label: 'Toutes' },
+    { value: 'new_order',    label: '📦 Commandes' },
+    { value: 'payment',      label: '💰 Paiements' },
+    { value: 'review',       label: '⭐ Avis' },
+    { value: 'system',       label: '🔧 Système' },
+    { value: 'subscription', label: '🎫 Abonnements' },
   ];
 
   readonly typeIcon: Record<string, string> = {
-    commande:  '📦',
-    paiement:  '💰',
-    litige:    '⚠️',
-    avis:      '⭐',
-    systeme:   '🔧',
-    abonnement:'🎫',
+    new_order:    '📦',
+    payment:      '💰',
+    delivery:     '🚚',
+    review:       '⭐',
+    system:       '🔧',
+    subscription: '🎫',
   };
 
   readonly iconBg: Record<string, string> = {
-    commande:  'bg-blue-100',
-    paiement:  'bg-green-100',
-    litige:    'bg-red-100',
-    avis:      'bg-yellow-100',
-    systeme:   'bg-neutral-100',
-    abonnement:'bg-purple-100',
+    new_order:    'bg-blue-100',
+    payment:      'bg-green-100',
+    delivery:     'bg-blue-100',
+    review:       'bg-yellow-100',
+    system:       'bg-neutral-100',
+    subscription: 'bg-purple-100',
   };
 
   ngOnInit(): void { this.load(); }

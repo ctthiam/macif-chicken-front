@@ -203,11 +203,11 @@
                       <div class="border-b border-neutral-100 pb-4 last:border-0 last:pb-0">
                         <div class="flex items-start gap-3">
                           <div class="w-9 h-9 bg-primary-100 rounded-full flex items-center justify-center shrink-0">
-                            <span class="text-sm font-bold text-primary">{{ avis.acheteur.name.charAt(0).toUpperCase() }}</span>
+                            <span class="text-sm font-bold text-primary">{{ avis.auteur?.name?.charAt(0)?.toUpperCase() ?? "?" }}</span>
                           </div>
                           <div class="flex-1">
                             <div class="flex items-center justify-between gap-2 mb-1">
-                              <p class="text-sm font-semibold text-neutral-900">{{ avis.acheteur.name }}</p>
+                              <p class="text-sm font-semibold text-neutral-900">{{ avis.auteur?.name ?? "Anonyme" }}</p>
                               <p class="text-xs text-neutral-400">{{ formatDate(avis.created_at) }}</p>
                             </div>
                             <app-rating-stars [rating]="avis.note" [showValue]="false" size="sm" />
@@ -327,23 +327,223 @@
                 <!-- Bouton Commander -->
                 @if (!commandeSuccess()) {
                   <button
-                    (click)="commander()"
-                    [disabled]="commandeLoading()"
-                    class="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-700 text-white font-bold py-4 rounded-xl shadow-md hover:shadow-lg transition-all text-base disabled:opacity-70"
+                    (click)="ouvrirFormulaireCommande()"
+                    class="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-700 text-white font-bold py-4 rounded-xl shadow-md hover:shadow-lg transition-all text-base"
                   >
-                    @if (commandeLoading()) {
-                      <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                      </svg>
-                      En cours…
-                    } @else {
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-                      </svg>
-                      Commander maintenant
-                    }
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                    Commander maintenant
                   </button>
+                }
+
+                <!-- Modal formulaire commande -->
+                @if (showCommandeForm()) {
+                  <div class="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4" (click)="showCommandeForm.set(false)">
+                    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4 animate-fade-in" (click)="$event.stopPropagation()">
+
+                      <div class="flex items-center justify-between">
+                        <h3 class="font-display font-bold text-neutral-900 text-lg">Finaliser la commande</h3>
+                        <button (click)="showCommandeForm.set(false)" class="text-neutral-400 hover:text-neutral-700">✕</button>
+                      </div>
+
+                      <!-- Résumé -->
+                      <div class="bg-neutral-50 rounded-xl p-3 text-sm">
+                        <p class="font-semibold text-neutral-800">{{ stock()?.titre }}</p>
+                        <p class="text-neutral-500 mt-0.5">{{ quantite() }} {{ uniteLabel }} — <strong class="text-primary">{{ prixTotal | number:'1.0-0' }} FCFA</strong></p>
+                      </div>
+
+                      <!-- Mode paiement -->
+                      <div>
+                        <label class="block text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-2">Mode de paiement *</label>
+                        <div class="grid grid-cols-3 gap-2">
+                          @for (mp of modesPaiement; track mp.value) {
+                            <button
+                              (click)="modePaiement.set(mp.value)"
+                              class="py-2.5 rounded-xl border-2 text-xs font-semibold transition-all"
+                              [class]="modePaiement() === mp.value
+                                ? 'border-primary bg-primary-50 text-primary'
+                                : 'border-neutral-200 text-neutral-600 hover:border-neutral-300'"
+                            >
+                              {{ mp.label }}
+                            </button>
+                          }
+                        </div>
+                      </div>
+
+                      <!-- Adresse livraison -->
+                      <div>
+                        <label class="block text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-1.5">Adresse de livraison *</label>
+                        <textarea
+                          [ngModel]="adresseLivraison()"
+                          (ngModelChange)="adresseLivraison.set($event)"
+                          rows="2"
+                          placeholder="Ex: Rue 10, Cité Keur Gorgui, Dakar"
+                          class="w-full border border-neutral-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"
+                        ></textarea>
+                      </div>
+
+                      <!-- Date souhaitée -->
+                      <div>
+                        <label class="block text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-1.5">Date de livraison souhaitée <span class="normal-case font-normal text-neutral-400">(optionnel)</span></label>
+                        <input
+                          type="date"
+                          [ngModel]="dateLivraison()"
+                          (ngModelChange)="dateLivraison.set($event)"
+                          [min]="today"
+                          class="w-full border border-neutral-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                        />
+                      </div>
+
+                      <!-- Note -->
+                      <div>
+                        <label class="block text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-1.5">Note pour l'éleveur <span class="normal-case font-normal text-neutral-400">(optionnel)</span></label>
+                        <input
+                          type="text"
+                          [ngModel]="noteLivraison()"
+                          (ngModelChange)="noteLivraison.set($event)"
+                          placeholder="Ex: Abattu de préférence le matin"
+                          class="w-full border border-neutral-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                        />
+                      </div>
+
+                      <!-- Erreur -->
+                      @if (commandeError()) {
+                        <div class="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl">
+                          <span class="text-red-500 shrink-0">⚠️</span>
+                          <p class="text-sm text-red-700">{{ commandeError() }}</p>
+                        </div>
+                      }
+
+                      <!-- Boutons -->
+                      <div class="flex gap-3 pt-1">
+                        <button (click)="showCommandeForm.set(false)"
+                          class="flex-1 border border-neutral-200 text-neutral-700 font-semibold py-3 rounded-xl text-sm hover:bg-neutral-50 transition-colors">
+                          Annuler
+                        </button>
+                        <button
+                          (click)="commander()"
+                          [disabled]="commandeLoading()"
+                          class="flex-1 bg-accent hover:bg-accent-700 text-white font-bold py-3 rounded-xl text-sm transition-all disabled:opacity-70 flex items-center justify-center gap-2"
+                        >
+                          @if (commandeLoading()) {
+                            <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                            </svg>
+                            Envoi…
+                          } @else {
+                            Confirmer la commande
+                          }
+                        </button>
+                      </div>
+
+                    </div>
+                  </div>
+                }
+
+
+                <!-- Modal formulaire commande -->
+                @if (showCommandeForm()) {
+                  <div class="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4" (click)="showCommandeForm.set(false)">
+                    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4 animate-fade-in" (click)="$event.stopPropagation()">
+
+                      <div class="flex items-center justify-between">
+                        <h3 class="font-display font-bold text-neutral-900 text-lg">Finaliser la commande</h3>
+                        <button (click)="showCommandeForm.set(false)" class="text-neutral-400 hover:text-neutral-700 text-xl leading-none">✕</button>
+                      </div>
+
+                      <!-- Résumé -->
+                      <div class="bg-neutral-50 rounded-xl p-3 text-sm">
+                        <p class="font-semibold text-neutral-800">{{ stock()?.titre }}</p>
+                        <p class="text-neutral-500 mt-0.5">{{ quantite() }} {{ uniteLabel }} — <strong class="text-primary">{{ prixTotal | number:'1.0-0' }} FCFA</strong></p>
+                      </div>
+
+                      <!-- Mode paiement -->
+                      <div>
+                        <label class="block text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-2">Mode de paiement *</label>
+                        <div class="grid grid-cols-3 gap-2">
+                          @for (mp of modesPaiement; track mp.value) {
+                            <button
+                              (click)="modePaiement.set(mp.value)"
+                              class="py-2.5 rounded-xl border-2 text-xs font-semibold transition-all"
+                              [class]="modePaiement() === mp.value
+                                ? 'border-primary bg-primary-50 text-primary'
+                                : 'border-neutral-200 text-neutral-600 hover:border-neutral-300'"
+                            >{{ mp.label }}</button>
+                          }
+                        </div>
+                      </div>
+
+                      <!-- Adresse livraison -->
+                      <div>
+                        <label class="block text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-1.5">Adresse de livraison *</label>
+                        <textarea
+                          [ngModel]="adresseLivraison()"
+                          (ngModelChange)="adresseLivraison.set($event)"
+                          rows="2"
+                          placeholder="Ex: Rue 10, Cité Keur Gorgui, Dakar"
+                          class="w-full border border-neutral-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"
+                        ></textarea>
+                      </div>
+
+                      <!-- Date souhaitée -->
+                      <div>
+                        <label class="block text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-1.5">Date souhaitée <span class="normal-case font-normal text-neutral-400">(optionnel)</span></label>
+                        <input
+                          type="date"
+                          [ngModel]="dateLivraison()"
+                          (ngModelChange)="dateLivraison.set($event)"
+                          [min]="today"
+                          class="w-full border border-neutral-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                        />
+                      </div>
+
+                      <!-- Note pour l'éleveur -->
+                      <div>
+                        <label class="block text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-1.5">Note <span class="normal-case font-normal text-neutral-400">(optionnel)</span></label>
+                        <input
+                          type="text"
+                          [ngModel]="noteLivraison()"
+                          (ngModelChange)="noteLivraison.set($event)"
+                          placeholder="Ex: Abattu de préférence le matin"
+                          class="w-full border border-neutral-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                        />
+                      </div>
+
+                      <!-- Erreur -->
+                      @if (commandeError()) {
+                        <div class="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl">
+                          <span class="text-red-500 shrink-0">⚠️</span>
+                          <p class="text-sm text-red-700">{{ commandeError() }}</p>
+                        </div>
+                      }
+
+                      <!-- Boutons -->
+                      <div class="flex gap-3 pt-1">
+                        <button (click)="showCommandeForm.set(false)"
+                          class="flex-1 border border-neutral-200 text-neutral-700 font-semibold py-3 rounded-xl text-sm hover:bg-neutral-50 transition-colors">
+                          Annuler
+                        </button>
+                        <button
+                          (click)="commander()"
+                          [disabled]="commandeLoading()"
+                          class="flex-1 bg-accent hover:bg-accent-700 text-white font-bold py-3 rounded-xl text-sm transition-all disabled:opacity-70 flex items-center justify-center gap-2"
+                        >
+                          @if (commandeLoading()) {
+                            <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                            </svg>
+                            Envoi…
+                          } @else {
+                            Confirmer la commande
+                          }
+                        </button>
+                      </div>
+
+                    </div>
+                  </div>
                 }
 
                 <!-- Bouton Favori éleveur -->

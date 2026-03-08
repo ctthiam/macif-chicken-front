@@ -124,6 +124,12 @@ export const routes: Routes = [
         path: 'stocks/nouveau',
         loadComponent: () => import('./features/dashboard/eleveur/stocks/nouveau/eleveur-stock-nouveau.component')
           .then(m => m.EleveurStockNouveauComponent),
+        title: 'Nouvelle annonce — Éleveur',
+      },
+      {
+        path: 'stocks/modifier/:id',
+        loadComponent: () => import('./features/dashboard/eleveur/stocks/nouveau/eleveur-stock-nouveau.component')
+          .then(m => m.EleveurStockNouveauComponent),
         title: 'Publier un stock — Éleveur',
       },
       {
@@ -156,10 +162,9 @@ export const routes: Routes = [
           .then(m => m.EleveurProfilComponent),
         title: 'Mon profil — Éleveur',
       },
-      
       {
         path: 'notifications',
-        loadComponent: () => import('.//shared/notifications/notifications.component')
+        loadComponent: () => import('./shared/notifications/notifications.component')
           .then(m => m.NotificationsComponent),
         title: 'Notifications',
       },
@@ -213,7 +218,6 @@ export const routes: Routes = [
           .then(m => m.AcheteurProfilComponent),
         title: 'Mon profil — Acheteur',
       },
-      
       {
         path: 'notifications',
         loadComponent: () => import('./shared/notifications/notifications.component')
@@ -276,7 +280,6 @@ export const routes: Routes = [
           .then(m => m.AdminFinancesComponent),
         title: 'Finances — Admin',
       },
-
       {
         path: 'notifications',
         loadComponent: () => import('./shared/notifications/notifications.component')

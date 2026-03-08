@@ -21,6 +21,7 @@ interface DashboardData {
       montant_total:   number;
       quantite:        number;
       stock_titre:     string | null;
+      stock_photo:     string | null;
       eleveur_nom:     string | null;
       created_at:      string;
     }[];
