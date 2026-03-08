@@ -45,7 +45,7 @@ interface EleveurFavori {
   } @else {
     <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
       @for (fav of favoris(); track fav.eleveur_id) {
-        <div class="bg-white rounded-2xl border border-neutral-100 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col gap-3">
+        <div class="bg-white rounded-2xl border border-neutral-100 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col gap-3 min-h-[160px]">
 
           <!-- Avatar + nom -->
           <div class="flex items-center gap-3">

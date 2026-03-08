@@ -110,7 +110,7 @@
         <div class="divide-y divide-neutral-50">
           @for (u of stats()!.derniers_utilisateurs; track u.id) {
             <div class="flex items-center gap-3 px-6 py-3 hover:bg-neutral-50 transition-colors"
-                 [routerLink]="['/admin/utilisateurs', u.id]">
+                 style="cursor:pointer">
               <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 font-bold text-sm text-white"
                    [class]="u.role === 'eleveur' ? 'bg-primary' : u.role === 'acheteur' ? 'bg-blue-500' : 'bg-red-500'">
                 {{ u.name.charAt(0).toUpperCase() }}
@@ -163,7 +163,7 @@
         <div class="divide-y divide-neutral-50">
           @for (l of stats()!.derniers_litiges; track l.id) {
             <div class="px-6 py-3.5 hover:bg-neutral-50 transition-colors cursor-pointer"
-                 [routerLink]="['/admin/litiges', l.id]">
+                 style="cursor:pointer">
               <div class="flex items-start justify-between gap-3">
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-semibold text-neutral-900 truncate">{{ l.motif }}</p>

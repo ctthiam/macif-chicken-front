@@ -46,7 +46,7 @@
               {{ eleveur()!.name.charAt(0).toUpperCase() }}
             </span>
           </div>
-          @if (eleveur()!.is_certified) {
+          @if (eleveur()!.stats?.is_certified ?? eleveur()!.eleveur_profile?.is_certified ?? false) {
             <div class="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-md border-2 border-white">
               <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
@@ -59,7 +59,7 @@
         <div class="flex-1">
           <div class="flex flex-wrap items-center gap-3 mb-2">
             <h1 class="font-display text-2xl font-extrabold text-white">{{ eleveur()!.name }}</h1>
-            @if (eleveur()!.is_certified) {
+            @if (eleveur()!.stats?.is_certified ?? eleveur()!.eleveur_profile?.is_certified ?? false) {
               <span class="inline-flex items-center gap-1.5 bg-green-500/20 border border-green-400/30 text-green-300 text-xs font-semibold px-3 py-1 rounded-full">
                 <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
@@ -75,26 +75,26 @@
           <!-- Note + localisation + membre depuis -->
           <div class="flex flex-wrap items-center gap-4 mb-3">
             <app-rating-stars
-              [rating]="eleveur()!.note_moyenne"
-              [count]="eleveur()!.nombre_avis"
+              [rating]="eleveur()!.note_moyenne ?? eleveur()!.stats?.note_moyenne ?? 0"
+              [count]="eleveur()!.stats?.total_avis ?? 0"
               size="sm"
             />
             <span class="flex items-center gap-1.5 text-primary-200 text-sm">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
               </svg>
-              {{ eleveur()!.localisation }}
+              {{ eleveur()!.stats?.localisation ?? eleveur()!.eleveur_profile?.localisation ?? eleveur()!.ville ?? '—' }}
             </span>
             <span class="flex items-center gap-1.5 text-primary-200 text-sm">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
               </svg>
-              Membre depuis {{ formatDate(eleveur()!.membre_depuis) }}
+              Membre depuis {{ formatDate(eleveur()!.created_at) }}
             </span>
           </div>
 
-          @if (eleveur()!.bio) {
-            <p class="text-primary-100 text-sm leading-relaxed max-w-xl">{{ eleveur()!.bio }}</p>
+          @if (eleveur()!.eleveur_profile?.description ?? null) {
+            <p class="text-primary-100 text-sm leading-relaxed max-w-xl">{{ eleveur()!.eleveur_profile?.description ?? null }}</p>
           }
         </div>
 
@@ -185,9 +185,9 @@
               <div class="bg-white rounded-2xl border border-neutral-100 p-5">
                 <div class="flex items-center gap-6">
                   <div class="text-center shrink-0">
-                    <p class="text-5xl font-extrabold text-primary">{{ eleveur()!.note_moyenne | number:'1.1-1' }}</p>
-                    <app-rating-stars [rating]="eleveur()!.note_moyenne" [showValue]="false" size="md" />
-                    <p class="text-xs text-neutral-400 mt-1">{{ eleveur()!.nombre_avis }} avis</p>
+                    <p class="text-5xl font-extrabold text-primary">{{ (eleveur()!.stats?.note_moyenne ?? eleveur()!.eleveur_profile?.note_moyenne ?? 0) | number:'1.1-1' }}</p>
+                    <app-rating-stars [rating]="eleveur()!.note_moyenne ?? eleveur()!.stats?.note_moyenne ?? 0" [showValue]="false" size="md" />
+                    <p class="text-xs text-neutral-400 mt-1">{{ eleveur()!.stats?.total_avis ?? 0 }} avis</p>
                   </div>
                   <div class="flex-1 space-y-2">
                     @for (d of notesDistrib; track d.note) {
@@ -212,11 +212,11 @@
                 <div class="bg-white rounded-2xl border border-neutral-100 p-5">
                   <div class="flex items-start gap-3">
                     <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center shrink-0">
-                      <span class="text-sm font-bold text-primary">{{ avis.acheteur.name.charAt(0).toUpperCase() }}</span>
+                      <span class="text-sm font-bold text-primary">{{ avis.auteur?.name?.charAt(0)?.toUpperCase() ?? '?' }}</span>
                     </div>
                     <div class="flex-1">
                       <div class="flex items-center justify-between gap-2 mb-1">
-                        <p class="text-sm font-semibold text-neutral-900">{{ avis.acheteur.name }}</p>
+                        <p class="text-sm font-semibold text-neutral-900">{{ avis.auteur?.name ?? 'Anonyme' }}</p>
                         <p class="text-xs text-neutral-400">{{ formatDate(avis.created_at) }}</p>
                       </div>
                       <app-rating-stars [rating]="avis.note" [showValue]="false" size="sm" />
@@ -248,10 +248,10 @@
                 </div>
                 <div>
                   <p class="text-xs text-neutral-400">Localisation</p>
-                  <p class="text-sm font-medium text-neutral-800">{{ eleveur()!.localisation }}</p>
+                  <p class="text-sm font-medium text-neutral-800">{{ eleveur()!.stats?.localisation ?? eleveur()!.eleveur_profile?.localisation ?? eleveur()!.ville ?? '—' }}</p>
                 </div>
               </div>
-              @if (eleveur()!.phone) {
+              @if (eleveur()!.eleveur_profile?.localisation ?? null) {
                 <div class="flex items-center gap-3">
                   <div class="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center shrink-0">
                     <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -260,7 +260,7 @@
                   </div>
                   <div>
                     <p class="text-xs text-neutral-400">Téléphone</p>
-                    <p class="text-sm font-medium text-neutral-800">{{ eleveur()!.phone }}</p>
+                    <p class="text-sm font-medium text-neutral-800">{{ eleveur()!.eleveur_profile?.localisation ?? null }}</p>
                   </div>
                 </div>
               }
@@ -272,7 +272,7 @@
                 </div>
                 <div>
                   <p class="text-xs text-neutral-400">Membre depuis</p>
-                  <p class="text-sm font-medium text-neutral-800">{{ formatDate(eleveur()!.membre_depuis) }}</p>
+                  <p class="text-sm font-medium text-neutral-800">{{ formatDate(eleveur()!.created_at) }}</p>
                 </div>
               </div>
             </div>

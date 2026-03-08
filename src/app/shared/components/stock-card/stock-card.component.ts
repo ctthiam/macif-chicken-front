@@ -100,10 +100,10 @@ export interface Stock {
         </div>
 
         <!-- Note éleveur -->
-        @if (stock.eleveur && stock.eleveur.note_moyenne > 0) {
+        @if (stock.eleveur && +(stock.eleveur.note_moyenne ?? 0) > 0) {
           <div class="mb-3">
             <app-rating-stars
-              [rating]="stock.eleveur.note_moyenne"
+              [rating]="+(stock.eleveur.note_moyenne ?? 0)"
               [count]="stock.eleveur.nombre_avis"
               size="sm"
             />

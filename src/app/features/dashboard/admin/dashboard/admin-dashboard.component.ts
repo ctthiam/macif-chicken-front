@@ -42,6 +42,9 @@ interface AdminStats {
     id: number; motif: string; statut: string; created_at: string;
     acheteur: { name: string } | null; eleveur: { name: string } | null;
   }[];
+  evolution_mensuelle: {
+    mois: string; revenus: number; commandes: number; utilisateurs: number;
+  }[];
   activite_recente: {
     id: number; statut_commande: string; montant_total: number;
     created_at: string; acheteur: { name: string } | null; stock: { titre: string } | null;
@@ -85,7 +88,17 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit {
       next: (res) => {
         this.stats.set(res.data);
         this.loading.set(false);
-        setTimeout(() => this.renderChart(), 100);
+        // Retry jusqu'à ce que le canvas soit visible (max 10 tentatives × 150ms)
+        let attempts = 0;
+        const tryRender = () => {
+          const canvas = this.chartCanvas?.nativeElement;
+          if (canvas && canvas.offsetWidth > 0) {
+            this.renderChart();
+          } else if (attempts++ < 10) {
+            setTimeout(tryRender, 150);
+          }
+        };
+        setTimeout(tryRender, 150);
       },
       error: () => this.loading.set(false),
     });
@@ -93,18 +106,28 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit {
 
   renderChart(): void {
     const canvas = this.chartCanvas?.nativeElement;
-    if (!canvas || !this.stats()) return; // pas de graphique dans cette version
+    if (!canvas || !this.stats()) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const data: any[] = []; // graphique non disponible dans l'API actuelle
+    const W = canvas.offsetWidth || canvas.parentElement?.offsetWidth || 600;
+    const H = canvas.offsetHeight || 208;
+    canvas.width = W; canvas.height = H;
+
+    const data: any[] = this.stats()!.evolution_mensuelle ?? [];
     const metric = this.chartMetric();
-    const values = data.map(d => d[metric] as number);
+    const values = data.map(d => +(d[metric] ?? 0));
     const labels = data.map(d => d.mois);
     const max    = Math.max(...values, 1);
 
-    const W = canvas.offsetWidth, H = canvas.offsetHeight;
-    canvas.width = W; canvas.height = H;
+    // Si aucune donnée — afficher message
+    if (!data.length) {
+      ctx.fillStyle = '#9CA3AF';
+      ctx.font = '13px Inter,sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Aucune donnée disponible', W / 2, H / 2);
+      return;
+    }
 
     const padL = 70, padR = 20, padT = 20, padB = 40;
     const cW = W - padL - padR, cH = H - padT - padB;

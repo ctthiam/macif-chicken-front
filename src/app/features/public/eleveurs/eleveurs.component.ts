@@ -12,9 +12,9 @@ import { environment }   from '../../../environments/environment';
 interface EleveurPublic {
   id:             number;
   name:           string;
-  nom_poulailler: string;
-  localisation:   string;
-  note_moyenne:   number;
+  nom_poulailler: string | null;
+  localisation:   string | null;
+  note_moyenne:   number | null;
   nombre_avis:    number;
   is_certified:   boolean;
   stocks_count:   number;
@@ -67,7 +67,7 @@ interface EleveurPublic {
             <!-- Avatar coloré -->
             <div class="h-28 bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center relative">
               <span class="text-5xl font-extrabold text-primary-700 opacity-70">
-                {{ e.nom_poulailler[0].toUpperCase() }}
+                {{ (e.nom_poulailler ?? e.name ?? '?')[0].toUpperCase() }}
               </span>
               @if (e.is_certified) {
                 <span class="absolute top-3 right-3 bg-white text-green-700 text-xs font-bold px-2 py-1 rounded-full shadow-sm">
@@ -77,7 +77,7 @@ interface EleveurPublic {
             </div>
             <div class="p-5">
               <h3 class="font-display font-bold text-neutral-900 text-base group-hover:text-primary transition-colors">
-                {{ e.nom_poulailler }}
+                {{ e.nom_poulailler ?? e.name }}
               </h3>
               <p class="text-sm text-neutral-500 mt-0.5">{{ e.name }}</p>
               @if (e.localisation) {
@@ -96,7 +96,7 @@ interface EleveurPublic {
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                   </svg>
                   <span class="text-sm font-bold text-neutral-800">
-                    {{ e.note_moyenne > 0 ? e.note_moyenne.toFixed(1) : '—' }}
+                    {{ (+(e.note_moyenne ?? 0)) > 0 ? (+(e.note_moyenne!)).toFixed(1) : '—' }}
                   </span>
                   <span class="text-xs text-neutral-400">({{ e.nombre_avis }})</span>
                 </div>
@@ -127,7 +127,7 @@ export class EleveursComponent implements OnInit {
   ngOnInit(): void {
     this.http.get<any>(`${environment.apiUrl}/eleveurs`).subscribe({
       next: (res) => {
-        const data = res.data ?? res;
+        const data = Array.isArray(res.data) ? res.data : (res.data?.data ?? res.data ?? []);
         this.eleveurs.set(data);
         this.filtered.set(data);
         this.loading.set(false);
@@ -141,7 +141,7 @@ export class EleveursComponent implements OnInit {
     if (this.search.trim()) {
       const q = this.search.toLowerCase();
       result = result.filter(e =>
-        e.nom_poulailler.toLowerCase().includes(q) ||
+        (e.nom_poulailler ?? '').toLowerCase().includes(q) ||
         e.name.toLowerCase().includes(q) ||
         (e.localisation ?? '').toLowerCase().includes(q)
       );

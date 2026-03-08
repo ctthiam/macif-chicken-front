@@ -23,6 +23,7 @@ interface AbonnementActif {
   stocks_utilises: number;
   stocks_max:   number;
   is_active:    boolean;
+  est_actif?:   boolean;
 }
 
 @Component({
@@ -56,7 +57,7 @@ interface AbonnementActif {
                 <span class="font-display font-extrabold text-xl text-neutral-900 capitalize">
                   {{ abonnement()!.plan }}
                 </span>
-                @if (abonnement()!.is_active) {
+                @if ((abonnement()!.is_active ?? abonnement()!.est_actif)) {
                   <span class="bg-green-100 text-green-700 text-xs font-bold px-2.5 py-1 rounded-full">Actif</span>
                 } @else {
                   <span class="bg-red-100 text-red-700 text-xs font-bold px-2.5 py-1 rounded-full">Expiré</span>
@@ -71,7 +72,7 @@ interface AbonnementActif {
           <div class="min-w-[200px]">
             <div class="flex justify-between text-xs font-semibold text-neutral-600 mb-1.5">
               <span>Stocks publiés</span>
-              <span>{{ abonnement()!.stocks_utilises }} / {{ abonnement()!.stocks_max }}</span>
+              <span>{{ abonnement()!.stocks_utilises }} / {{ abonnement()!.stocks_max >= 9999 ? '∞' : abonnement()!.stocks_max }}</span>
             </div>
             <div class="w-full h-2.5 bg-neutral-100 rounded-full overflow-hidden">
               <div class="h-full rounded-full transition-all duration-500"
@@ -79,7 +80,7 @@ interface AbonnementActif {
                    [style.width.%]="pourcentageStocks()"></div>
             </div>
             <p class="text-xs text-neutral-400 mt-1">
-              {{ abonnement()!.stocks_max - abonnement()!.stocks_utilises }} emplacement(s) restant(s)
+              {{ abonnement()!.stocks_max >= 9999 ? 'Illimité' : (abonnement()!.stocks_max - abonnement()!.stocks_utilises) + ' emplacement(s) restant(s)' }}
             </p>
           </div>
         </div>
@@ -219,7 +220,19 @@ export class EleveurAbonnementComponent implements OnInit {
   ngOnInit(): void {
     this.http.get<any>(`${environment.apiUrl}/eleveur/abonnement`).subscribe({
       next: (res) => {
-        this.abonnement.set(res.data ?? res);
+        const d = res.data;
+        const stocksActifs = res.stocks_actifs ?? 0;
+        if (d) {
+          const stocksMax = d.stock_limit ?? null; // null = illimité
+          this.abonnement.set({
+            ...d,
+            is_active:      d.statut === 'actif',
+            stocks_utilises: stocksActifs,
+            stocks_max:      stocksMax ?? 9999, // 9999 = illimité côté affichage
+          });
+        } else {
+          this.abonnement.set(null);
+        }
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
@@ -252,7 +265,7 @@ export class EleveurAbonnementComponent implements OnInit {
 
   pourcentageStocks(): number {
     const a = this.abonnement();
-    if (!a || a.stocks_max === 0) return 0;
+    if (!a || a.stocks_max === 0 || a.stocks_max >= 9999) return (a?.stocks_utilises ?? 0) > 0 ? 10 : 0;
     return Math.min(100, Math.round((a.stocks_utilises / a.stocks_max) * 100));
   }
 

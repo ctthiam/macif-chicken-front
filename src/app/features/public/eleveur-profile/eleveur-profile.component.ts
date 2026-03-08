@@ -15,25 +15,46 @@ interface Avis {
   id:          number;
   note:        number;
   commentaire: string;
+  reply:       string | null;
   created_at:  string;
-  acheteur:    { name: string };
+  auteur:      { name: string; avatar: string | null } | null;
 }
 
 interface EleveurProfil {
-  id:              number;
-  name:            string;
-  bio:             string;
-  localisation:    string;
-  phone:           string;
-  is_certified:    boolean;
-  note_moyenne:    number;
-  nombre_avis:     number;
-  total_stocks:    number;
-  total_commandes: number;
-  membre_depuis:   string;
-  abonnement:      string;
-  stocks:          Stock[];
-  avis:            Avis[];
+  id:          number;
+  name:        string;
+  avatar:      string | null;
+  ville:       string | null;
+  created_at:  string;
+  stocks:      Stock[];
+  avis:        Avis[];
+  stats: {
+    total_stocks:    number;
+    total_avis:      number;
+    note_moyenne?:   number | null;
+    nombre_avis?:    number | null;
+    is_certified?:   boolean;
+    localisation?:   string | null;
+    nom_poulailler?: string | null;
+    total_commandes?: number;
+  };
+  eleveur_profile?: {
+    nom_poulailler?: string | null;
+    description?:    string | null;
+    localisation?:   string | null;
+    is_certified?:   boolean;
+    note_moyenne?:   number | null;
+    nombre_avis?:    number | null;
+    photos?:         string[];
+  } | null;
+  // champs optionnels présents si eleveurProfile existe
+  bio?:          string | null;
+  localisation?: string | null;
+  phone?:        string | null;
+  is_certified?: boolean;
+  note_moyenne?: number;
+  nombre_avis?:  number;
+  abonnement?:   string | null;
 }
 
 @Component({
@@ -74,7 +95,7 @@ export class EleveurProfileComponent implements OnInit {
   }
 
   get notesDistrib(): { note: number; count: number; pct: number }[] {
-    const avis = this.eleveur()?.avis ?? [];
+    const avis = (this.eleveur()?.avis ?? []) as Avis[];
     return [5, 4, 3, 2, 1].map(n => {
       const count = avis.filter(a => a.note === n).length;
       return { note: n, count, pct: avis.length ? (count / avis.length) * 100 : 0 };
@@ -83,11 +104,12 @@ export class EleveurProfileComponent implements OnInit {
 
   get quickStats() {
     const e = this.eleveur();
+    const noteMoy = e?.stats?.note_moyenne ?? e?.eleveur_profile?.note_moyenne ?? e?.note_moyenne;
     return [
-      { value: e?.total_stocks    ?? 0, label: 'Annonces' },
-      { value: e?.total_commandes ?? 0, label: 'Commandes' },
-      { value: e?.nombre_avis     ?? 0, label: 'Avis' },
-      { value: e?.note_moyenne    ? (e.note_moyenne).toFixed(1) : '—', label: 'Note moy.' },
+      { value: e?.stats?.total_stocks ?? 0,  label: 'Annonces' },
+      { value: e?.stats?.total_commandes ?? 0, label: 'Commandes' },
+      { value: e?.stats?.total_avis ?? 0,    label: 'Avis' },
+      { value: noteMoy ? Number(noteMoy).toFixed(1) : '—', label: 'Note moy.' },
     ];
   }
 

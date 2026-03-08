@@ -68,8 +68,8 @@ import { environment }    from '../../../../environments/environment';
 
       <div>
         <label class="block text-xs font-semibold text-neutral-700 mb-1.5 uppercase tracking-wide">Adresse par défaut</label>
-        <input type="text" formControlName="adresse_defaut"
-               placeholder="Votre adresse habituelle de livraison"
+        <input type="text" formControlName="adresse"
+               placeholder="Votre adresse"
                class="w-full text-sm border border-neutral-200 rounded-xl px-4 py-3 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-100 transition-all"/>
       </div>
     </div>
@@ -156,10 +156,10 @@ export class AcheteurProfilComponent implements OnInit {
   ngOnInit(): void {
     const u = this.auth.user();
     this.form = this.fb.group({
-      name:           [u?.name ?? '',  Validators.required],
-      phone:          [u?.phone ?? ''],
-      email:          [{ value: u?.email ?? '', disabled: true }],
-      adresse_defaut: [u?.adresse_defaut ?? ''],
+      name:    [u?.name ?? '',  Validators.required],
+      phone:   [u?.phone ?? ''],
+      email:   [{ value: u?.email ?? '', disabled: true }],
+      adresse: [u?.adresse ?? ''],
     });
 
     this.pwForm = this.fb.group({
@@ -167,13 +167,33 @@ export class AcheteurProfilComponent implements OnInit {
       password:              ['', [Validators.required, Validators.minLength(8)]],
       password_confirmation: ['', Validators.required],
     });
+
+    // Charger depuis l'API pour avoir les données à jour
+    this.http.get<any>(`${environment.apiUrl}/acheteur/profile`).subscribe({
+      next: (res: any) => {
+        const d = res.data;
+        this.form.patchValue({
+          name:    d.name    ?? '',
+          phone:   d.phone   ?? '',
+          adresse: d.adresse ?? '',
+        });
+        // Mettre à jour le user en cache
+        if (u) this.auth.setUser({ ...u, name: d.name, phone: d.phone });
+      },
+    });
   }
 
   sauvegarder(): void {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     this.saving.set(true); this.error.set(''); this.success.set(false);
-    this.http.put(`${environment.apiUrl}/profile`, this.form.getRawValue()).subscribe({
-      next:  () => { this.saving.set(false); this.success.set(true); setTimeout(() => this.success.set(false), 3000); },
+    this.http.put(`${environment.apiUrl}/acheteur/profile`, this.form.getRawValue()).subscribe({
+      next: (res: any) => {
+        this.saving.set(false);
+        this.success.set(true);
+        setTimeout(() => this.success.set(false), 3000);
+        const u = this.auth.user();
+        if (u && res.data) this.auth.setUser({ ...u, name: res.data.name, phone: res.data.phone });
+      },
       error: (e) => { this.saving.set(false); this.error.set(e.error?.message ?? 'Erreur.'); },
     });
   }
@@ -181,7 +201,7 @@ export class AcheteurProfilComponent implements OnInit {
   changerMotDePasse(): void {
     if (this.pwForm.invalid) return;
     this.pwSaving.set(true);
-    this.http.put(`${environment.apiUrl}/profile/password`, this.pwForm.value).subscribe({
+    this.http.put(`${environment.apiUrl}/auth/change-password`, this.pwForm.value).subscribe({
       next:  () => { this.pwSaving.set(false); this.pwForm.reset(); },
       error: () => this.pwSaving.set(false),
     });

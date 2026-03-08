@@ -102,7 +102,7 @@ export class AdminCommandesComponent implements OnInit {
   load(): void {
     this.loading.set(true);
     let url = `${environment.apiUrl}/admin/commandes?per_page=30`;
-    if (this.filtreStatut()) url += `&statut=${this.filtreStatut()}`;
+    if (this.filtreStatut()) url += `&statut_commande=${this.filtreStatut()}`;
     this.http.get<any>(url).subscribe({
       next: (res) => { this.commandes.set(res.data ?? []); this.total.set(res.meta?.total ?? 0); this.loading.set(false); },
       error: () => this.loading.set(false),
