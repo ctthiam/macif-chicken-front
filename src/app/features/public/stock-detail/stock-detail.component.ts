@@ -227,7 +227,8 @@ export class StockDetailComponent implements OnInit {
     this.commandeLoading.set(true);
     this.commandeError.set('');
 
-    this.http.post(`${environment.apiUrl}/acheteur/commandes`, {
+    // Étape 1 — Créer la commande
+    this.http.post<any>(`${environment.apiUrl}/acheteur/commandes`, {
       stock_id:                 s.id,
       quantite:                 this.quantite(),
       mode_paiement:            this.modePaiement(),
@@ -235,18 +236,47 @@ export class StockDetailComponent implements OnInit {
       date_livraison_souhaitee: this.dateLivraison() || null,
       note_livraison:           this.noteLivraison().trim() || null,
     }).subscribe({
-      next: (res: any) => {
-        this.commandeLoading.set(false);
-        this.commandeSuccess.set(true);
-        setTimeout(() => {
-          this.router.navigate(['/acheteur/commandes']);
-        }, 2000);
+      next: (res) => {
+        const commandeId = res.data?.id;
+        if (!commandeId) {
+          this.commandeLoading.set(false);
+          this.commandeError.set('Commande créée mais ID introuvable.');
+          return;
+        }
+
+        // Étape 2 — Initier le paiement NabooPay
+        this.http.post<any>(`${environment.apiUrl}/paiements/initier`, {
+          commande_id: commandeId,
+        }).subscribe({
+          next: (paiRes) => {
+            this.commandeLoading.set(false);
+
+            if (paiRes.payment_url) {
+              // Fermer le modal et ouvrir NabooPay dans un nouvel onglet
+              this.showCommandeForm.set(false);
+              window.open(paiRes.payment_url, '_blank');
+              // Rediriger vers les commandes pour que l'acheteur voie sa commande
+              setTimeout(() => this.router.navigate(['/acheteur/commandes']), 500);
+            } else {
+              // Commande créée mais pas d'URL → rediriger quand même, paiement depuis commandes
+              this.commandeSuccess.set(true);
+              setTimeout(() => this.router.navigate(['/acheteur/commandes']), 2000);
+            }
+          },
+          error: (paiErr) => {
+            // Paiement échoué mais commande créée → afficher l'erreur clairement
+            this.commandeLoading.set(false);
+            const msg = paiErr.error?.message ?? 'Paiement impossible. Réessayez depuis vos commandes.';
+            this.commandeError.set('Commande créée ✓ — ' + msg);
+            // Rediriger quand même vers les commandes après 3s
+            setTimeout(() => this.router.navigate(['/acheteur/commandes']), 3000);
+          },
+        });
       },
       error: (err) => {
         this.commandeLoading.set(false);
         const errors = err.error?.errors;
         if (errors) {
-          // Afficher la première erreur de validation détaillée
           const first = Object.values(errors)[0] as string[];
           this.commandeError.set(first?.[0] ?? err.error?.message ?? 'Erreur lors de la commande.');
         } else {

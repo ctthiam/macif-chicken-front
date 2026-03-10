@@ -42,7 +42,7 @@
   </div>
 
   <!-- ── Graphique + Stocks populaires ─────────────────────── -->
-  <div class="grid lg:grid-cols-3 gap-6">
+  <div class="grid lg:grid-cols-3 gap-6 items-start">
 
     <!-- Graphique revenus -->
     <div class="lg:col-span-2 bg-white rounded-2xl shadow-card border border-neutral-100 p-6">
@@ -64,8 +64,8 @@
           >12 mois</button>
         </div>
       </div>
-      <div class="relative h-52">
-        <canvas #chartCanvas class="w-full h-full"></canvas>
+      <div class="relative" style="height:220px;contain:strict;overflow:hidden;">
+        <canvas #chartCanvas style="display:block;width:100%;height:100%;max-width:100%;"></canvas>
       </div>
     </div>
 
@@ -89,8 +89,10 @@
           @for (stock of data()!.stocks_populaires; track stock.id) {
             <div class="flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-50 transition-colors group">
               <div class="w-10 h-10 bg-primary-100 rounded-xl overflow-hidden shrink-0 flex items-center justify-center">
-                @if (stock.photos && stock.photos.length > 0) {
-                  <img [src]="stock.photos[0]" [alt]="stock.titre" class="w-full h-full object-cover"/>
+                @if (stock.photo) {
+                  <img [src]="stock.photo" [alt]="stock.titre"
+                       class="w-full h-full object-cover"
+                       (error)="$any($event.target).style.display='none'" />
                 } @else {
                   <span class="text-lg">🐔</span>
                 }

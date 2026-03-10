@@ -194,7 +194,7 @@ export class EleveurStocksComponent implements OnInit {
         this.stocks.update(list => list.filter(s => s.id !== stock.id));
         this.total.update(t => t - 1);
       },
-      error: () => alert('Erreur lors de la suppression.'),
+      error: (err) => alert(err.error?.message ?? 'Erreur lors de la suppression.'),
     });
   }
 }

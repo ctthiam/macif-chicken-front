@@ -22,6 +22,9 @@ interface Commande {
   stock:       { id: number; titre: string; photos: string[] };
   eleveur:     { id: number; name: string; localisation: string };
   adresse_livraison: string;
+  litige?:          { id: number; statut: string; raison: string } | null;
+  statut_paiement:  string;
+  mode_paiement?:   string | null;
 }
 
 @Component({
@@ -36,6 +39,17 @@ interface Commande {
     <h1 class="font-display text-2xl font-extrabold text-neutral-900">Mes commandes</h1>
     <p class="text-neutral-500 text-sm mt-0.5">{{ total() }} commande{{ total() > 1 ? 's' : '' }} au total</p>
   </div>
+
+  <!-- Erreur paiement -->
+  @if (paiementErreur()) {
+    <div class="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-700">
+      <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+      </svg>
+      {{ paiementErreur() }}
+      <button (click)="paiementErreur.set('')" class="ml-auto text-red-500 hover:text-red-700">✕</button>
+    </div>
+  }
 
   <!-- Filtres -->
   <div class="flex flex-wrap gap-2">
@@ -120,11 +134,55 @@ interface Commande {
                 Voir l'annonce
               </a>
 
+              <!-- Payer : visible si confirmée ET pas encore payée -->
+              @if (cmd.statut_commande === 'confirmee' && cmd.statut_paiement === 'en_attente') {
+                <button (click)="payer(cmd)"
+                        [disabled]="paiementEnCours() === cmd.id"
+                        class="text-xs font-semibold bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-800 transition-all flex items-center gap-1.5 disabled:opacity-60">
+                  @if (paiementEnCours() === cmd.id) {
+                    <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                    </svg>
+                    Redirection…
+                  } @else {
+                    💳 Payer {{ formatMontant(cmd.montant_total) }}
+                  }
+                </button>
+              }
+
+              <!-- Badge "Payé" si déjà payé -->
+              @if (cmd.statut_paiement === 'paye' || cmd.statut_paiement === 'libere') {
+                <span class="text-xs font-semibold flex items-center gap-1.5 px-3 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg">
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                  </svg>
+                  Payé
+                </span>
+              }
+
               <!-- Annuler si confirmée -->
               @if (cmd.statut_commande === 'confirmee') {
                 <button (click)="annuler(cmd)"
                         class="text-xs font-semibold bg-red-50 text-red-600 px-3 py-2 rounded-lg hover:bg-red-100 transition-all">
                   Annuler la commande
+                </button>
+              }
+
+              <!-- Confirmer la réception — libère les fonds escrow vers l'éleveur -->
+              @if (cmd.statut_commande === 'en_livraison' && cmd.statut_paiement === 'paye') {
+                <button (click)="confirmerReception(cmd)"
+                        [disabled]="confirmationEnCours() === cmd.id"
+                        class="text-xs font-semibold bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all flex items-center gap-1.5 disabled:opacity-60">
+                  @if (confirmationEnCours() === cmd.id) {
+                    <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                    </svg>
+                    Confirmation…
+                  } @else {
+                    ✅ Confirmer la réception
+                  }
                 </button>
               }
 
@@ -142,6 +200,19 @@ interface Commande {
                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                   </svg>
                   Avis donné
+                </span>
+              }
+
+              <!-- Litige : bouton si en_livraison ou livree, badge si déjà en litige -->
+              @if (['en_livraison', 'livree'].includes(cmd.statut_commande) && !cmd.litige) {
+                <button (click)="ouvrirLitige(cmd)"
+                        class="text-xs font-semibold bg-red-50 text-red-600 border border-red-200 px-3 py-2 rounded-lg hover:bg-red-100 transition-all ml-auto">
+                  ⚖️ Ouvrir un litige
+                </button>
+              }
+              @if (cmd.statut_commande === 'litige' || cmd.litige) {
+                <span class="text-xs font-semibold flex items-center gap-1.5 px-3 py-2 bg-orange-50 text-orange-700 border border-orange-200 rounded-lg ml-auto">
+                  ⚖️ Litige {{ cmd.litige?.statut ?? 'ouvert' }}
                 </span>
               }
             </div>
@@ -184,6 +255,57 @@ interface Commande {
           }
         </div>
       }
+    </div>
+  }
+
+  <!-- Modal litige -->
+  @if (litigeModal()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center text-xl">⚖️</div>
+          <div>
+            <h3 class="font-display font-bold text-neutral-900">Ouvrir un litige</h3>
+            <p class="text-xs text-neutral-500">Commande #{{ litigeModal()!.reference ?? litigeModal()!.id }}</p>
+          </div>
+        </div>
+
+        <div class="bg-orange-50 border border-orange-200 rounded-xl p-3 mb-4 text-xs text-orange-700">
+          ⚠️ Un litige suspend la libération des fonds jusqu'à résolution par notre équipe.
+        </div>
+
+        <div class="mb-5">
+          <label class="block text-xs font-semibold text-neutral-700 mb-1.5 uppercase tracking-wide">
+            Raison du litige *
+          </label>
+          <textarea
+            [value]="litigeRaison()"
+            (input)="litigeRaison.set($any($event.target).value)"
+            rows="5"
+            placeholder="Décrivez précisément le problème rencontré (produit non conforme, non livré, qualité insuffisante…)"
+            class="w-full text-sm border border-neutral-200 rounded-xl px-4 py-3 focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 resize-none transition-all"
+          ></textarea>
+          <p class="text-xs text-neutral-400 mt-1">{{ litigeRaison().length }} / 1000 caractères (min. 10)</p>
+        </div>
+
+        @if (litigeError()) {
+          <div class="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl mb-4 text-xs text-red-700">
+            {{ litigeError() }}
+          </div>
+        }
+
+        <div class="flex gap-3">
+          <button (click)="litigeModal.set(null)"
+                  class="flex-1 border-2 border-neutral-200 text-neutral-600 font-semibold py-3 rounded-xl hover:border-neutral-400 transition-all text-sm">
+            Annuler
+          </button>
+          <button (click)="soumettreLitige()"
+                  [disabled]="litigeSubmitting() || litigeRaison().length < 10"
+                  class="flex-1 bg-red-600 text-white font-semibold py-3 rounded-xl hover:bg-red-700 transition-all text-sm disabled:opacity-60">
+            @if (litigeSubmitting()) { Envoi… } @else { Confirmer le litige }
+          </button>
+        </div>
+      </div>
     </div>
   }
 
@@ -248,6 +370,19 @@ export class AcheteurCommandesComponent implements OnInit {
   avisSubmitting = signal(false);
   avisForm!:   FormGroup;
 
+  // Paiement
+  paiementEnCours = signal<number | null>(null);
+
+  // Confirmation réception
+  confirmationEnCours = signal<number | null>(null);  // id de la commande en cours de paiement
+  paiementErreur  = signal('');
+
+  // Litige
+  litigeModal   = signal<Commande | null>(null);
+  litigeRaison  = signal('');
+  litigeError   = signal('');
+  litigeSubmitting = signal(false);
+
   readonly timeline = [
     { statut: 'confirmee',      label: 'Confirmée',  num: '1', order: 1 },
     { statut: 'en_preparation', label: 'Préparation',num: '2', order: 2 },
@@ -262,6 +397,7 @@ export class AcheteurCommandesComponent implements OnInit {
     { value: 'en_livraison',   label: '🚚 En livraison' },
     { value: 'livree',         label: '📦 Livrées' },
     { value: 'annulee',        label: '❌ Annulées' },
+    { value: 'litige',         label: '⚖️ Litiges' },
   ];
 
   constructor(private http: HttpClient, private fb: FormBuilder) {}
@@ -327,6 +463,83 @@ export class AcheteurCommandesComponent implements OnInit {
   isStepDone(current: string, step: string): boolean {
     const order = (s: string) => this.timeline.find(t => t.statut === s)?.order ?? 0; // statut = step key
     return order(current) > order(step);
+  }
+
+  confirmerReception(cmd: Commande): void {
+    if (!confirm('Confirmez-vous avoir bien reçu cette commande ? Les fonds seront libérés vers l\'éleveur.')) return;
+    this.confirmationEnCours.set(cmd.id);
+
+    this.http.post<any>(`${environment.apiUrl}/acheteur/commandes/${cmd.id}/confirmer-livraison`, {})
+      .subscribe({
+        next: () => {
+          this.confirmationEnCours.set(null);
+          this.commandes.update(list =>
+            list.map(c => c.id === cmd.id
+              ? { ...c, statut_commande: 'livree', statut_paiement: 'libere' }
+              : c
+            )
+          );
+        },
+        error: (err) => {
+          this.confirmationEnCours.set(null);
+          this.paiementErreur.set(err.error?.message ?? 'Erreur lors de la confirmation.');
+        },
+      });
+  }
+
+  payer(cmd: Commande): void {
+    this.paiementEnCours.set(cmd.id);
+    this.paiementErreur.set('');
+
+    this.http.post<any>(`${environment.apiUrl}/paiements/initier`, {
+      commande_id: cmd.id,
+    }).subscribe({
+      next: (res) => {
+        this.paiementEnCours.set(null);
+        if (res.payment_url) {
+          // Ouvrir la page de paiement NabooPay dans un nouvel onglet
+          window.open(res.payment_url, '_blank');
+        } else {
+          this.paiementErreur.set('Impossible de récupérer l\'URL de paiement.');
+        }
+      },
+      error: (err) => {
+        this.paiementEnCours.set(null);
+        this.paiementErreur.set(
+          err.error?.message ?? 'Erreur lors de l\'initialisation du paiement. Réessayez.'
+        );
+      },
+    });
+  }
+
+  ouvrirLitige(cmd: Commande): void {
+    this.litigeModal.set(cmd);
+    this.litigeRaison.set('');
+    this.litigeError.set('');
+  }
+
+  soumettreLitige(): void {
+    const raison = this.litigeRaison().trim();
+    if (raison.length < 10) { this.litigeError.set('La raison doit faire au moins 10 caractères.'); return; }
+    const cmd = this.litigeModal();
+    if (!cmd) return;
+    this.litigeSubmitting.set(true);
+    this.http.post<any>(`${environment.apiUrl}/acheteur/commandes/${cmd.id}/litige`, { raison }).subscribe({
+      next: (res) => {
+        this.litigeSubmitting.set(false);
+        this.litigeModal.set(null);
+        // Mettre à jour la commande localement
+        this.commandes.update(list => list.map(c =>
+          c.id === cmd.id
+            ? { ...c, statut_commande: 'litige', litige: res.data }
+            : c
+        ));
+      },
+      error: (err) => {
+        this.litigeSubmitting.set(false);
+        this.litigeError.set(err.error?.message ?? 'Erreur lors de l\'ouverture du litige.');
+      },
+    });
   }
 
   formatMontant(v: number): string { return new Intl.NumberFormat('fr-SN').format(v) + ' FCFA'; }

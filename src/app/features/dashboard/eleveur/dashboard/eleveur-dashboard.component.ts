@@ -30,7 +30,7 @@ interface DashboardData {
     stock:            { titre: string };
   }[];
   graphique_mensuel: { mois: string; revenus: number; commandes: number }[];
-  stocks_populaires: { id: number; titre: string; vues: number; commandes: number; statut: string; photos?: string[] }[];
+  stocks_populaires: { id: number; titre: string; vues: number; commandes: number; statut: string; photo?: string | null }[];
 }
 
 @Component({
@@ -80,8 +80,11 @@ export class EleveurDashboardComponent implements OnInit, AfterViewInit {
     const revenus   = graphData.map(d => d.revenus);
     const max       = Math.max(...revenus, 1);
 
-    const W = canvas.offsetWidth;
-    const H = canvas.offsetHeight;
+    // Lire la taille du conteneur PARENT avant de redimensionner le canvas
+    // (évite l'effet "snowball" où canvas.offsetWidth grandit à chaque rendu)
+    const container = canvas.parentElement;
+    const W = container ? container.clientWidth : 400;
+    const H = container ? container.clientHeight : 208;
     canvas.width  = W;
     canvas.height = H;
 

@@ -2,6 +2,7 @@
 // Fichier : src/app/features/dashboard/eleveur/stocks/nouveau/eleveur-stock-nouveau.component.ts
 // ============================================================
 import { Component, signal, OnInit } from '@angular/core';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { CommonModule }   from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -248,7 +249,7 @@ export class EleveurStockNouveauComponent implements OnInit {
   submitting  = signal(false);
   erreurApi   = signal<string | null>(null);
   erreurAbonnement = signal<string | null>(null);
-  photoPreviews = signal<string[]>([]);
+  photoPreviews = signal<SafeUrl[]>([]);
   photoFiles:   File[] = [];
   editMode    = signal(false);
   stockId     = signal<number | null>(null);
@@ -257,10 +258,11 @@ export class EleveurStockNouveauComponent implements OnInit {
   readonly today = new Date().toISOString().split('T')[0];
 
   constructor(
-    private fb:    FormBuilder,
-    public  router: Router,
-    private http:  HttpClient,
-    private route: ActivatedRoute,
+    private fb:       FormBuilder,
+    public  router:   Router,
+    private http:     HttpClient,
+    private route:    ActivatedRoute,
+    private sanitizer: DomSanitizer,
   ) {
     this.form = this.fb.group({
       titre:               ['', [Validators.required, Validators.minLength(3)]],
@@ -297,7 +299,7 @@ export class EleveurStockNouveauComponent implements OnInit {
           });
           // Afficher les photos existantes
           if (s.photos?.length) {
-            this.photoPreviews.set(s.photos);
+            this.photoPreviews.set(s.photos.map((url: string) => this.sanitizer.bypassSecurityTrustUrl(url)));
           }
           this.loadingEdit.set(false);
         },
@@ -324,7 +326,9 @@ export class EleveurStockNouveauComponent implements OnInit {
     toAdd.forEach(f => {
       const reader = new FileReader();
       reader.onload = e => {
-        this.photoPreviews.update(prev => [...prev, e.target?.result as string]);
+        const dataUrl = e.target?.result as string;
+        const safeUrl = this.sanitizer.bypassSecurityTrustUrl(dataUrl);
+        this.photoPreviews.update(prev => [...prev, safeUrl]);
       };
       reader.readAsDataURL(f);
     });

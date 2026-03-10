@@ -48,9 +48,10 @@ export interface Stock {
             [alt]="stock.titre"
             class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
+            (error)="onImgError($event)"
           />
         } @else {
-          <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100">
+          <div class="fallback-chicken w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100">
             <span class="text-5xl">🐔</span>
           </div>
         }
@@ -153,6 +154,17 @@ export interface Stock {
 export class StockCardComponent {
   @Input() stock!: Stock;
   @Output() commanderClick = new EventEmitter<Stock>();
+
+  onImgError(event: Event): void {
+    // Masquer l'img cassée → afficher le fallback 🐔
+    const img = event.target as HTMLImageElement;
+    img.style.display = 'none';
+    const parent = img.closest('.relative.h-48') as HTMLElement;
+    if (parent) {
+      const fallback = parent.querySelector('.fallback-chicken') as HTMLElement;
+      if (fallback) fallback.style.display = 'flex';
+    }
+  }
 
   get modeVenteLabel(): string {
     const map: Record<string, string> = {

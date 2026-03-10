@@ -16,7 +16,7 @@ interface Stock {
   statut:      string;
   prix_par_kg: number;
   created_at:  string;
-  photos:      string[];
+  photo:       string | null;
   eleveur:     { id: number; name: string; is_certified: boolean };
 }
 
@@ -71,8 +71,8 @@ interface Stock {
               <td class="px-5 py-3.5">
                 <div class="flex items-center gap-3">
                   <div class="w-10 h-10 rounded-lg bg-primary-50 overflow-hidden shrink-0 flex items-center justify-center">
-                    @if (s.photos?.length) {
-                      <img [src]="s.photos[0]" class="w-full h-full object-cover"/>
+                    @if (s.photo) {
+                      <img [src]="s.photo" class="w-full h-full object-cover"/>
                     } @else {
                       <span class="text-lg">🐔</span>
                     }
